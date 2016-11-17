@@ -123,19 +123,18 @@ drawer model =
 
 body : Model -> List (Html Msg)
 body model =
-    [ newMatchButton 0 model
-    , grid []
+    [ grid []
         [ cell [ size Tablet 6, size Desktop 12, size Phone 2 ]
-            [ case model.section of
+            (case model.section of
                 History ->
-                    historyView
+                    historyView model
 
                 Positions ->
-                    positionsView
+                    positionsView model
 
                 NewMatch ->
-                    newMatchView
-            ]
+                    newMatchView model
+            )
         ]
     ]
 
@@ -153,16 +152,20 @@ newMatchButton id model =
         [ Icon.i "add" ]
 
 
-historyView : Html Msg
-historyView =
-    Html.h3 [] [ Html.text "Historical" ]
+historyView : Model -> List (Html Msg)
+historyView model =
+    [ Html.h3 [] [ Html.text "Historical" ]
+    , newMatchButton 0 model
+    ]
 
 
-positionsView : Html Msg
-positionsView =
-    Html.h3 [] [ Html.text "Positions" ]
+positionsView : Model -> List (Html Msg)
+positionsView model =
+    [ Html.h3 [] [ Html.text "Positions" ]
+    , newMatchButton 0 model
+    ]
 
 
-newMatchView : Html Msg
-newMatchView =
-    Html.h3 [] [ Html.text "New match" ]
+newMatchView : Model -> List (Html Msg)
+newMatchView model =
+    [ Html.h3 [] [ Html.text "New match" ] ]
