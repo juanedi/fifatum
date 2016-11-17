@@ -155,14 +155,14 @@ newMatchButton id model =
 
 historyView : Html Msg
 historyView =
-    Html.h1 [] [ Html.text "History" ]
+    Html.h3 [] [ Html.text "Historical" ]
 
 
 positionsView : Html Msg
 positionsView =
-    Html.h1 [] [ Html.text "Positions" ]
+    Html.h3 [] [ Html.text "Positions" ]
 
 
 newMatchView : Html Msg
 newMatchView =
-    Html.h1 [] [ Html.text "New match" ]
+    Html.h3 [] [ Html.text "New match" ]
