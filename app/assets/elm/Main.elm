@@ -102,13 +102,23 @@ header model =
 
 drawer : Model -> List (Html Msg)
 drawer model =
-    [ Layout.title [] [ Html.text "Juan Edi" ]
-    , Layout.navigation []
-        [ Layout.link [ Layout.href "#positions", Layout.onClick (MenuLinkClick Positions) ] [ Html.text "Positions" ]
-        , Layout.link [ Layout.href "#history", Layout.onClick (MenuLinkClick History) ] [ Html.text "Historical" ]
-        , Layout.link [] [ Html.text "Logout" ]
+    let
+        menuLink href label section =
+            Layout.link
+                [ Layout.href href
+                , Layout.onClick (MenuLinkClick section)
+                , Options.cs "mdl-navigation__link--current"
+                    `Options.when` (model.section == section)
+                ]
+                [ Html.text label ]
+    in
+        [ Layout.title [] [ Html.text "Juan Edi" ]
+        , Layout.navigation []
+            [ menuLink "#positions" "Positions" Positions
+            , menuLink "#history" "Historical" History
+            , Layout.link [] [ Html.text "Logout" ]
+            ]
         ]
-    ]
 
 
 body : Model -> List (Html Msg)
