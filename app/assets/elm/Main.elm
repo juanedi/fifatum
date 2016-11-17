@@ -4,6 +4,7 @@ import Html exposing (Html)
 import Html.App
 import Material
 import Material.Button as Button
+import Material.Grid exposing (grid, cell, size, Device(..))
 import Material.Icon as Icon
 import Material.Layout as Layout
 import Material.Options as Options exposing (css)
@@ -19,7 +20,7 @@ type alias Id =
 
 
 type Msg
-    = NoOp
+    = MenuLinkClick Section
     | Navigate Section
     | Mdl (Material.Msg Msg)
 
@@ -27,6 +28,7 @@ type Msg
 type Section
     = Positions
     | History
+    | NewMatch
 
 
 type alias Model =
@@ -47,20 +49,25 @@ main =
 
 init : Flags -> ( Model, Cmd Msg )
 init flags =
-    Return.singleton { mdl = Material.model, section = History }
+    Return.singleton
+        { mdl = Material.model
+        , section = Positions
+        }
         |> Return.command (Layout.sub0 Mdl)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        NoOp ->
-            Return.singleton model
-
-        Navigate section ->
+        MenuLinkClick section ->
             model
                 |> update (Layout.toggleDrawer Mdl)
                 |> Return.map (setSection section)
+
+        Navigate section ->
+            model
+                |> setSection section
+                |> Return.singleton
 
         Mdl msg ->
             Material.update msg model
@@ -97,8 +104,8 @@ drawer : Model -> List (Html Msg)
 drawer model =
     [ Layout.title [] [ Html.text "Juan Edi" ]
     , Layout.navigation []
-        [ Layout.link [ Layout.onClick (Navigate Positions) ] [ Html.text "Positions" ]
-        , Layout.link [ Layout.onClick (Navigate History) ] [ Html.text "History" ]
+        [ Layout.link [ Layout.href "#positions", Layout.onClick (MenuLinkClick Positions) ] [ Html.text "Positions" ]
+        , Layout.link [ Layout.href "#history", Layout.onClick (MenuLinkClick History) ] [ Html.text "Historical" ]
         , Layout.link [] [ Html.text "Logout" ]
         ]
     ]
@@ -107,12 +114,19 @@ drawer model =
 body : Model -> List (Html Msg)
 body model =
     [ newMatchButton 0 model
-    , case model.section of
-        History ->
-            historyView
+    , grid []
+        [ cell [ size Tablet 6, size Desktop 12, size Phone 2 ]
+            [ case model.section of
+                History ->
+                    historyView
 
-        Positions ->
-            positionsView
+                Positions ->
+                    positionsView
+
+                NewMatch ->
+                    newMatchView
+            ]
+        ]
     ]
 
 
@@ -123,7 +137,7 @@ newMatchButton id model =
         model.mdl
         [ Button.fab
         , Button.colored
-        , Button.onClick NoOp
+        , Button.onClick (Navigate NewMatch)
         , Options.cs "corner-btn"
         ]
         [ Icon.i "add" ]
@@ -137,3 +151,8 @@ historyView =
 positionsView : Html Msg
 positionsView =
     Html.h1 [] [ Html.text "Positions" ]
+
+
+newMatchView : Html Msg
+newMatchView =
+    Html.h1 [] [ Html.text "New match" ]
