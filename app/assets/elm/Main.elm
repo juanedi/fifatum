@@ -60,9 +60,9 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         MenuLinkClick section ->
-            model
-                |> update (Layout.toggleDrawer Mdl)
-                |> Return.map (setSection section)
+            Return.singleton model
+                |> andThenUpdate (Layout.toggleDrawer Mdl)
+                |> andThenUpdate (Navigate section)
 
         Navigate section ->
             model
@@ -71,6 +71,13 @@ update msg model =
 
         Mdl msg ->
             Material.update msg model
+
+
+andThenUpdate : Msg -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+andThenUpdate msg =
+    -- This is easier to pipe than using infix `andThen`.
+    -- Probably won't make sense after switching to 0.18
+    (flip Return.andThen) (update msg)
 
 
 setSection : Section -> Model -> Model
