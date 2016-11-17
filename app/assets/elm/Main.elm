@@ -41,14 +41,14 @@ main =
         { init = init
         , view = view
         , update = update
-        , subscriptions = always Sub.none
+        , subscriptions = \model -> Layout.subs Mdl model.mdl
         }
 
 
 init : Flags -> ( Model, Cmd Msg )
 init flags =
-    Return.singleton
-        { mdl = Material.model, section = History }
+    Return.singleton { mdl = Material.model, section = History }
+        |> Return.command (Layout.sub0 Mdl)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -75,7 +75,9 @@ view : Model -> Html Msg
 view model =
     Layout.render Mdl
         model.mdl
-        [ Layout.fixedHeader ]
+        [ Layout.fixedHeader
+        , Layout.fixedDrawer
+        ]
         { header = header model
         , drawer = drawer model
         , tabs = ( [], [] )
