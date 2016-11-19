@@ -16,6 +16,10 @@ import Return
 import Routing exposing (parser, Route(..))
 
 
+type alias Flags =
+    { username : String }
+
+
 type Msg
     = Navigate Route
     | Mdl (Material.Msg Msg)
@@ -33,6 +37,7 @@ type PageModel
 
 type alias Model =
     { mdl : Material.Model
+    , username : String
     , route : Route
     , pageModel : PageModel
     }
@@ -42,28 +47,29 @@ type alias Id =
     Int
 
 
-main : Program Never
+main : Program Flags
 main =
-    Navigation.program parser
+    Navigation.programWithFlags parser
         { init = init
         , view = view
         , update = update
-        , urlUpdate = \route model -> init route
+        , urlUpdate = \route model -> init { username = model.username } route
         , subscriptions = \model -> Layout.subs Mdl model.mdl
         }
 
 
-init : Route -> ( Model, Cmd Msg )
-init route =
-    initPage route
+init : Flags -> Route -> ( Model, Cmd Msg )
+init flags route =
+    initPage flags route
         |> Return.command (Layout.sub0 Mdl)
 
 
-initPage : Route -> ( Model, Cmd Msg )
-initPage route =
+initPage : Flags -> Route -> ( Model, Cmd Msg )
+initPage flags route =
     let
         initModel pageModel =
             { mdl = Material.model
+            , username = flags.username
             , route = route
             , pageModel = pageModel
             }
@@ -160,11 +166,11 @@ drawer model =
                 ]
                 [ text label ]
     in
-        [ Layout.title [] [ text "Juan Edi" ]
+        [ Layout.title [] [ text model.username ]
         , Layout.navigation []
             [ menuLink "#ranking" "Ranking" RankingRoute
             , menuLink "#history" "Historical" HistoryRoute
-            , Layout.link [] [ text "Logout" ]
+            , Layout.link [ Layout.href "/logout" ] [ text "Logout" ]
             ]
         ]
 
