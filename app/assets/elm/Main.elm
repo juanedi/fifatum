@@ -1,76 +1,100 @@
 module Main exposing (..)
 
 import Html exposing (Html)
-import Html.App
 import Material
 import Material.Button as Button
 import Material.Grid exposing (grid, cell, size, Device(..))
 import Material.Icon as Icon
 import Material.Layout as Layout
 import Material.Options as Options exposing (css)
+import Navigation
 import Return
+import Routing exposing (parser, Route(..))
+import History
+import Positions
+import NewMatch
 
 
-type alias Flags =
-    {}
+type Msg
+    = Navigate Route
+    | Mdl (Material.Msg Msg)
+
+
+type PageModel
+    = NotFound
+    | HistoryModel History.Model
+    | PositionsModel Positions.Model
+    | NewMatchModel NewMatch.Model
+
+
+type alias Model =
+    { mdl : Material.Model
+    , route : Route
+    , pageModel : PageModel
+    }
 
 
 type alias Id =
     Int
 
 
-type Msg
-    = MenuLinkClick Section
-    | Navigate Section
-    | Mdl (Material.Msg Msg)
-
-
-type Section
-    = Positions
-    | History
-    | NewMatch
-
-
-type alias Model =
-    { mdl : Material.Model
-    , section : Section
-    }
-
-
-main : Program Flags
+main : Program Never
 main =
-    Html.App.programWithFlags
+    Navigation.program parser
         { init = init
         , view = view
         , update = update
+        , urlUpdate = urlUpdate
         , subscriptions = \model -> Layout.subs Mdl model.mdl
         }
 
 
-init : Flags -> ( Model, Cmd Msg )
-init flags =
+init : Route -> ( Model, Cmd Msg )
+init route =
     Return.singleton
         { mdl = Material.model
-        , section = Positions
+        , route = route
+        , pageModel = initModel route
         }
         |> Return.command (Layout.sub0 Mdl)
+
+
+initModel : Route -> PageModel
+initModel route =
+    case route of
+        NotFoundRoute ->
+            NotFound
+
+        HistoryRoute ->
+            HistoryModel History.init
+
+        PositionsRoute ->
+            PositionsModel Positions.init
+
+        NewMatchRoute ->
+            NewMatchModel NewMatch.init
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        MenuLinkClick section ->
-            Return.singleton model
-                |> andThenUpdate (Layout.toggleDrawer Mdl)
-                |> andThenUpdate (Navigate section)
-
-        Navigate section ->
+        Navigate route ->
             model
-                |> setSection section
                 |> Return.singleton
+                |> Return.command (Routing.navigate route)
 
         Mdl msg ->
             Material.update msg model
+
+
+urlUpdate : Route -> Model -> ( Model, Cmd Msg )
+urlUpdate route model =
+    Return.singleton
+        { mdl = Material.model
+        , route = route
+        , pageModel = initModel route
+        }
+        |> Return.command (Layout.sub0 Mdl)
 
 
 andThenUpdate : Msg -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
@@ -80,9 +104,9 @@ andThenUpdate msg =
     (flip Return.andThen) (update msg)
 
 
-setSection : Section -> Model -> Model
-setSection section model =
-    { model | section = section }
+setRoute : Route -> Model -> Model
+setRoute route model =
+    { model | route = route }
 
 
 view : Model -> Html Msg
@@ -110,19 +134,19 @@ header model =
 drawer : Model -> List (Html Msg)
 drawer model =
     let
-        menuLink href label section =
+        menuLink href label route =
             Layout.link
                 [ Layout.href href
-                , Layout.onClick (MenuLinkClick section)
+                , Layout.onClick (Layout.toggleDrawer Mdl)
                 , Options.cs "mdl-navigation__link--current"
-                    `Options.when` (model.section == section)
+                    `Options.when` (model.route == route)
                 ]
                 [ Html.text label ]
     in
         [ Layout.title [] [ Html.text "Juan Edi" ]
         , Layout.navigation []
-            [ menuLink "#positions" "Positions" Positions
-            , menuLink "#history" "Historical" History
+            [ menuLink "#positions" "Positions" PositionsRoute
+            , menuLink "#history" "Historical" HistoryRoute
             , Layout.link [] [ Html.text "Logout" ]
             ]
         ]
@@ -132,15 +156,22 @@ body : Model -> List (Html Msg)
 body model =
     [ grid []
         [ cell [ size Tablet 6, size Desktop 12, size Phone 2 ]
-            (case model.section of
-                History ->
-                    historyView model
+            (case model.pageModel of
+                NotFound ->
+                    [ Html.div [] [ Html.text "ooops" ] ]
 
-                Positions ->
-                    positionsView model
+                HistoryModel historyModel ->
+                    [ History.view historyModel
+                    , newMatchButton 0 model
+                    ]
 
-                NewMatch ->
-                    newMatchView model
+                PositionsModel positionsModel ->
+                    [ Positions.view positionsModel
+                    , newMatchButton 0 model
+                    ]
+
+                NewMatchModel newMatchModel ->
+                    [ NewMatch.view newMatchModel ]
             )
         ]
     ]
@@ -153,26 +184,7 @@ newMatchButton id model =
         model.mdl
         [ Button.fab
         , Button.colored
-        , Button.onClick (Navigate NewMatch)
+        , Button.onClick (Navigate Routing.NewMatchRoute)
         , Options.cs "corner-btn"
         ]
         [ Icon.i "add" ]
-
-
-historyView : Model -> List (Html Msg)
-historyView model =
-    [ Html.h3 [] [ Html.text "Historical" ]
-    , newMatchButton 0 model
-    ]
-
-
-positionsView : Model -> List (Html Msg)
-positionsView model =
-    [ Html.h3 [] [ Html.text "Positions" ]
-    , newMatchButton 0 model
-    ]
-
-
-newMatchView : Model -> List (Html Msg)
-newMatchView model =
-    [ Html.h3 [] [ Html.text "New match" ] ]
