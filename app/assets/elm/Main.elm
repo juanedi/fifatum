@@ -1,6 +1,7 @@
 module Main exposing (..)
 
-import Html exposing (Html)
+import History
+import Html exposing (Html, div, text)
 import Material
 import Material.Button as Button
 import Material.Grid exposing (grid, cell, size, Device(..))
@@ -8,11 +9,10 @@ import Material.Icon as Icon
 import Material.Layout as Layout
 import Material.Options as Options exposing (css)
 import Navigation
+import NewMatch
+import Positions
 import Return
 import Routing exposing (parser, Route(..))
-import History
-import Positions
-import NewMatch
 
 
 type Msg
@@ -126,7 +126,7 @@ view model =
 header : Model -> List (Html Msg)
 header model =
     [ Layout.row []
-        [ Layout.title [] [ Html.text "fifa-stats" ]
+        [ Layout.title [] [ text "fifa-stats" ]
         ]
     ]
 
@@ -141,13 +141,13 @@ drawer model =
                 , Options.cs "mdl-navigation__link--current"
                     `Options.when` (model.route == route)
                 ]
-                [ Html.text label ]
+                [ text label ]
     in
-        [ Layout.title [] [ Html.text "Juan Edi" ]
+        [ Layout.title [] [ text "Juan Edi" ]
         , Layout.navigation []
             [ menuLink "#positions" "Positions" PositionsRoute
             , menuLink "#history" "Historical" HistoryRoute
-            , Layout.link [] [ Html.text "Logout" ]
+            , Layout.link [] [ text "Logout" ]
             ]
         ]
 
@@ -158,7 +158,7 @@ body model =
         [ cell [ size Tablet 6, size Desktop 12, size Phone 2 ]
             (case model.pageModel of
                 NotFound ->
-                    [ Html.div [] [ Html.text "ooops" ] ]
+                    [ div [] [ text "ooops" ] ]
 
                 HistoryModel historyModel ->
                     [ History.view historyModel
