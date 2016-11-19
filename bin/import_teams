@@ -1,0 +1,22 @@
+#!/usr/bin/env ruby
+APP_PATH = File.expand_path('../../config/application',  __dir__)
+require_relative '../config/boot'
+require_relative '../config/environment'
+
+data_file = Rails.root.join("data", "teams.json")
+
+if !File.exists? data_file
+  puts "Data file does not exist"
+  exit 1
+end
+
+data = JSON.parse(File.read(data_file))
+
+
+data.each do |league_name, team_names|
+  league = League.create(name: league_name)
+
+  team_names.each do |team_name|
+    league.teams.create(name: team_name)
+  end
+end
