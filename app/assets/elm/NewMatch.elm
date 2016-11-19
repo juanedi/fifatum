@@ -1,4 +1,10 @@
-module NewMatch exposing (Model, init, view)
+module NewMatch
+    exposing
+        ( Model
+        , Msg
+        , init
+        , view
+        )
 
 import Html exposing (Html)
 
@@ -7,9 +13,13 @@ type alias Model =
     {}
 
 
-init : Model
+type alias Msg =
+    ()
+
+
+init : ( Model, Cmd Msg )
 init =
-    {}
+    {} ! []
 
 
 view : Model -> Html a

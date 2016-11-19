@@ -20,6 +20,8 @@ type Msg
     = Navigate Route
     | Mdl (Material.Msg Msg)
     | RankingMsg Ranking.Msg
+    | HistoryMsg History.Msg
+    | NewMatchMsg NewMatch.Msg
 
 
 type PageModel
@@ -65,6 +67,11 @@ initPage route =
             , route = route
             , pageModel = pageModel
             }
+
+        lift modelTag cmdTag init =
+            init
+                |> Return.map (modelTag >> initModel)
+                |> Return.mapCmd cmdTag
     in
         case route of
             NotFoundRoute ->
@@ -74,18 +81,15 @@ initPage route =
 
             HistoryRoute ->
                 History.init
-                    |> Return.singleton
-                    |> Return.map (HistoryModel >> initModel)
+                    |> lift HistoryModel HistoryMsg
 
             RankingRoute ->
                 Ranking.init
-                    |> Return.map (RankingModel >> initModel)
-                    |> Return.mapCmd RankingMsg
+                    |> lift RankingModel RankingMsg
 
             NewMatchRoute ->
                 NewMatch.init
-                    |> Return.singleton
-                    |> Return.map (NewMatchModel >> initModel)
+                    |> lift NewMatchModel NewMatchMsg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -110,15 +114,11 @@ update msg model =
                             |> Return.map (setPageModel RankingModel)
                             |> Return.mapCmd RankingMsg
 
-                    _ ->
+                    ( HistoryModel pModel, HistoryMsg pMsg ) ->
                         Return.singleton model
 
-
-andThenUpdate : Msg -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
-andThenUpdate msg =
-    -- This is easier to pipe than using infix `andThen`.
-    -- Probably won't make sense after switching to 0.18
-    (flip Return.andThen) (update msg)
+                    _ ->
+                        Return.singleton model
 
 
 setRoute : Route -> Model -> Model
