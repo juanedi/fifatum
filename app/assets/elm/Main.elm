@@ -2,6 +2,7 @@ module Main exposing (..)
 
 import History
 import Html exposing (Html, div, text)
+import Html.App
 import Material
 import Material.Button as Button
 import Material.Grid exposing (grid, cell, size, Device(..))
@@ -10,7 +11,7 @@ import Material.Layout as Layout
 import Material.Options as Options exposing (css)
 import Navigation
 import NewMatch
-import Positions
+import Ranking
 import Return
 import Routing exposing (parser, Route(..))
 
@@ -18,12 +19,13 @@ import Routing exposing (parser, Route(..))
 type Msg
     = Navigate Route
     | Mdl (Material.Msg Msg)
+    | RankingMsg Ranking.Msg
 
 
 type PageModel
     = NotFound
     | HistoryModel History.Model
-    | PositionsModel Positions.Model
+    | RankingModel Ranking.Model
     | NewMatchModel NewMatch.Model
 
 
@@ -68,8 +70,8 @@ initModel route =
         HistoryRoute ->
             HistoryModel History.init
 
-        PositionsRoute ->
-            PositionsModel Positions.init
+        RankingRoute ->
+            RankingModel Ranking.init
 
         NewMatchRoute ->
             NewMatchModel NewMatch.init
@@ -85,6 +87,20 @@ update msg model =
 
         Mdl msg ->
             Material.update msg model
+
+        _ ->
+            let
+                setPageModel tagger pModel =
+                    { model | pageModel = (tagger pModel) }
+            in
+                case ( model.pageModel, msg ) of
+                    ( RankingModel pModel, RankingMsg pMsg ) ->
+                        Ranking.update pMsg pModel
+                            |> Return.map (setPageModel RankingModel)
+                            |> Return.mapCmd RankingMsg
+
+                    _ ->
+                        Return.singleton model
 
 
 urlUpdate : Route -> Model -> ( Model, Cmd Msg )
@@ -145,7 +161,7 @@ drawer model =
     in
         [ Layout.title [] [ text "Juan Edi" ]
         , Layout.navigation []
-            [ menuLink "#positions" "Positions" PositionsRoute
+            [ menuLink "#ranking" "Ranking" RankingRoute
             , menuLink "#history" "Historical" HistoryRoute
             , Layout.link [] [ text "Logout" ]
             ]
@@ -155,7 +171,7 @@ drawer model =
 body : Model -> List (Html Msg)
 body model =
     [ grid []
-        [ cell [ size Tablet 6, size Desktop 12, size Phone 2 ]
+        [ cell [ size Tablet 6, size Desktop 12, size Phone 4 ]
             (case model.pageModel of
                 NotFound ->
                     [ div [] [ text "ooops" ] ]
@@ -165,8 +181,8 @@ body model =
                     , newMatchButton 0 model
                     ]
 
-                PositionsModel positionsModel ->
-                    [ Positions.view positionsModel
+                RankingModel rankingModel ->
+                    [ Html.App.map RankingMsg (Ranking.view rankingModel)
                     , newMatchButton 0 model
                     ]
 
