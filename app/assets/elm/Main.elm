@@ -46,35 +46,46 @@ main =
         { init = init
         , view = view
         , update = update
-        , urlUpdate = urlUpdate
+        , urlUpdate = \route model -> init route
         , subscriptions = \model -> Layout.subs Mdl model.mdl
         }
 
 
 init : Route -> ( Model, Cmd Msg )
 init route =
-    Return.singleton
-        { mdl = Material.model
-        , route = route
-        , pageModel = initModel route
-        }
+    initPage route
         |> Return.command (Layout.sub0 Mdl)
 
 
-initModel : Route -> PageModel
-initModel route =
-    case route of
-        NotFoundRoute ->
-            NotFound
+initPage : Route -> ( Model, Cmd Msg )
+initPage route =
+    let
+        initModel pageModel =
+            { mdl = Material.model
+            , route = route
+            , pageModel = pageModel
+            }
+    in
+        case route of
+            NotFoundRoute ->
+                NotFound
+                    |> initModel
+                    |> Return.singleton
 
-        HistoryRoute ->
-            HistoryModel History.init
+            HistoryRoute ->
+                History.init
+                    |> Return.singleton
+                    |> Return.map (HistoryModel >> initModel)
 
-        RankingRoute ->
-            RankingModel Ranking.init
+            RankingRoute ->
+                Ranking.init
+                    |> Return.map (RankingModel >> initModel)
+                    |> Return.mapCmd RankingMsg
 
-        NewMatchRoute ->
-            NewMatchModel NewMatch.init
+            NewMatchRoute ->
+                NewMatch.init
+                    |> Return.singleton
+                    |> Return.map (NewMatchModel >> initModel)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -101,16 +112,6 @@ update msg model =
 
                     _ ->
                         Return.singleton model
-
-
-urlUpdate : Route -> Model -> ( Model, Cmd Msg )
-urlUpdate route model =
-    Return.singleton
-        { mdl = Material.model
-        , route = route
-        , pageModel = initModel route
-        }
-        |> Return.command (Layout.sub0 Mdl)
 
 
 andThenUpdate : Msg -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
