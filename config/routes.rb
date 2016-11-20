@@ -8,6 +8,7 @@ Rails.application.routes.draw do
 
   scope :api do
     get 'ranking', to: 'api#ranking'
+    get 'history/user', to: 'api#user_history'
   end
 
 end
