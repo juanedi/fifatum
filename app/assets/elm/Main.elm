@@ -73,29 +73,22 @@ initPage flags route =
             , route = route
             , pageModel = pageModel
             }
-
-        lift modelTag cmdTag init =
-            init
-                |> Return.map (modelTag >> initModel)
-                |> Return.mapCmd cmdTag
     in
         case route of
             NotFoundRoute ->
-                NotFound
-                    |> initModel
-                    |> Return.singleton
+                Return.singleton (initModel NotFound)
 
             HistoryRoute ->
                 History.init
-                    |> lift HistoryModel HistoryMsg
+                    |> Return.mapBoth HistoryMsg (HistoryModel >> initModel)
 
             RankingRoute ->
                 Ranking.init
-                    |> lift RankingModel RankingMsg
+                    |> Return.mapBoth RankingMsg (RankingModel >> initModel)
 
             NewMatchRoute ->
                 NewMatch.init
-                    |> lift NewMatchModel NewMatchMsg
+                    |> Return.mapBoth NewMatchMsg (NewMatchModel >> initModel)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -121,6 +114,9 @@ update msg model =
                             |> Return.mapCmd RankingMsg
 
                     ( HistoryModel pModel, HistoryMsg pMsg ) ->
+                        Return.singleton model
+
+                    ( NewMatchModel pModel, NewMatchMsg pMsg ) ->
                         Return.singleton model
 
                     _ ->
