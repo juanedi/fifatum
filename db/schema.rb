@@ -21,11 +21,13 @@ ActiveRecord::Schema.define(version: 20161119223103) do
 
   create_table "matches", force: :cascade do |t|
     t.integer  "user1_id"
+    t.integer  "user1_team_id"
     t.integer  "user1_goals"
     t.integer  "user2_id"
+    t.integer  "user2_team_id"
     t.integer  "user2_goals"
-    t.datetime "created_at",  null: false
-    t.datetime "updated_at",  null: false
+    t.datetime "created_at",    null: false
+    t.datetime "updated_at",    null: false
   end
 
   create_table "teams", force: :cascade do |t|
