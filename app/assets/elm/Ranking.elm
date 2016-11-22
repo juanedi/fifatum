@@ -15,6 +15,7 @@ import Material.Options as Options
 import Material.Progress as Progress
 import Material.Table as Table
 import Return
+import Shared
 
 
 type State
@@ -60,32 +61,12 @@ update msg model =
 view : Model -> Html Msg
 view model =
     let
-        loading =
-            div
-                [ Html.Attributes.style
-                    [ ( "margin", "auto" )
-                    , ( "height", "85vh" )
-                    ]
-                ]
-                [ div
-                    [ Html.Attributes.style
-                        [ ( "position", "relative" )
-                        , ( "top", "50%" )
-                        , ( "transform", "translateY(-50%)" )
-                        , ( "max-width", "500px" )
-                        , ( "margin", "auto" )
-                        ]
-                    ]
-                    [ Progress.indeterminate
-                    ]
-                ]
-
         center =
             Options.css "text-align" "center"
     in
         case model.state of
             Loading ->
-                loading
+                Shared.loading
 
             Loaded ranking ->
                 div

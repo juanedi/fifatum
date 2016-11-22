@@ -114,7 +114,9 @@ update msg model =
                             |> Return.mapCmd RankingMsg
 
                     ( HistoryModel pModel, HistoryMsg pMsg ) ->
-                        Return.singleton model
+                        History.update pMsg pModel
+                            |> Return.map (setPageModel HistoryModel)
+                            |> Return.mapCmd HistoryMsg
 
                     ( NewMatchModel pModel, NewMatchMsg pMsg ) ->
                         Return.singleton model
