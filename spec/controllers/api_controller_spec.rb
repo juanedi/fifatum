@@ -54,6 +54,7 @@ RSpec.describe ApiController do
 
         expect(match.api_json).to eq({
           "id" => match.id,
+          "date" => match.created_at.to_i,
           "user1" => {
             "id" => current_user.id,
             "name" => current_user.name,

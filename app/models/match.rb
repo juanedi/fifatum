@@ -15,6 +15,7 @@ class Match < ActiveRecord::Base
   def api_json
     {
       "id" => id,
+      "date" => created_at.to_i,
       "user1" => {
         "id" => user1.id,
         "name" => user1.name,

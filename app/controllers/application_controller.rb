@@ -5,7 +5,10 @@ class ApplicationController < ActionController::Base
 
   def index
     @js_flags = {
-      "username" => @current_user.name
+      "user" => {
+        "id" => @current_user.id,
+        "name" => @current_user.name
+      }
     }
   end
 

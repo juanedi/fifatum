@@ -1,14 +1,24 @@
 module Api
     exposing
-        ( Ranking
+        ( User
+        , Match
+        , Participation
+        , Ranking
         , fetchRanking
         , Stats
         , fetchStats
         )
 
+import Date exposing (Date)
 import Http
-import Json.Decode as Decode exposing ((:=), list, int, string)
+import Json.Decode as Decode exposing ((:=), list, int, float, string)
 import Task
+
+
+type alias User =
+    { id : Int
+    , name : String
+    }
 
 
 type alias Ranking =
@@ -21,6 +31,7 @@ type alias RankingEntry =
 
 type alias Match =
     { id : Int
+    , date : Date
     , user1 : Participation
     , user2 : Participation
     }
@@ -71,8 +82,9 @@ statsDecoder =
 
 matchDecoder : Decode.Decoder Match
 matchDecoder =
-    Decode.object3 Match
+    Decode.object4 Match
         ("id" := int)
+        ("date" := (Decode.map ((\x -> x * 1000) >> Date.fromTime) float))
         ("user1" := participationDecoder)
         ("user2" := participationDecoder)
 

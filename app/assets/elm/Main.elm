@@ -1,5 +1,6 @@
 module Main exposing (..)
 
+import Api
 import History
 import Html exposing (Html, div, text)
 import Html.App
@@ -17,7 +18,7 @@ import Routing exposing (parser, Route(..))
 
 
 type alias Flags =
-    { username : String }
+    { user : Api.User }
 
 
 type Msg
@@ -37,7 +38,7 @@ type PageModel
 
 type alias Model =
     { mdl : Material.Model
-    , username : String
+    , user : Api.User
     , route : Route
     , pageModel : PageModel
     }
@@ -53,7 +54,7 @@ main =
         { init = init
         , view = view
         , update = update
-        , urlUpdate = \route model -> init { username = model.username } route
+        , urlUpdate = \route model -> init { user = model.user } route
         , subscriptions = \model -> Layout.subs Mdl model.mdl
         }
 
@@ -69,7 +70,7 @@ initPage flags route =
     let
         initModel pageModel =
             { mdl = Material.model
-            , username = flags.username
+            , user = flags.user
             , route = route
             , pageModel = pageModel
             }
@@ -79,7 +80,7 @@ initPage flags route =
                 Return.singleton (initModel NotFound)
 
             HistoryRoute ->
-                History.init
+                History.init flags.user
                     |> Return.mapBoth HistoryMsg (HistoryModel >> initModel)
 
             RankingRoute ->
@@ -164,7 +165,7 @@ drawer model =
                 ]
                 [ text label ]
     in
-        [ Layout.title [] [ text model.username ]
+        [ Layout.title [] [ text model.user.name ]
         , Layout.navigation []
             [ menuLink "#ranking" "Ranking" RankingRoute
             , menuLink "#history" "Historical" HistoryRoute
@@ -182,7 +183,7 @@ body model =
                     [ div [] [ text "ooops" ] ]
 
                 HistoryModel historyModel ->
-                    [ History.view historyModel
+                    [ Html.App.map HistoryMsg (History.view historyModel)
                     , newMatchButton 0 model
                     ]
 

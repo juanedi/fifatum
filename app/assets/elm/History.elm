@@ -7,10 +7,16 @@ module History
         , view
         )
 
-import Api
-import Html exposing (Html)
+import Api exposing (User)
+import Date exposing (Date)
+import Html exposing (Html, div, text)
+import Material
+import Material.Options as Options
+import Material.Table as Table
 import Return
 import Shared
+import String
+import Util exposing (dateString)
 
 
 type State
@@ -19,26 +25,105 @@ type State
 
 
 type alias Model =
-    { state : State }
+    { mdl : Material.Model
+    , user : User
+    , state : State
+    }
 
 
 type Msg
-    = FetchOk Api.Stats
+    = Mdl (Material.Msg Msg)
+    | FetchOk Api.Stats
     | FetchFailed
 
 
-init : ( Model, Cmd Msg )
-init =
-    Return.singleton { state = Loading }
+init : User -> ( Model, Cmd Msg )
+init user =
+    Return.singleton
+        { mdl = Material.model
+        , user = user
+        , state = Loading
+        }
         |> Return.command (Api.fetchStats (always FetchFailed) FetchOk)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    -- TODO
-    Return.singleton model
+    case msg of
+        Mdl msg ->
+            Material.update msg model
+
+        FetchOk stats ->
+            Return.singleton
+                { model | state = Loaded stats }
+
+        FetchFailed ->
+            -- TODO
+            Return.singleton model
 
 
-view : Model -> Html a
+view : Model -> Html Msg
 view model =
-    Shared.loading
+    let
+        center =
+            Options.css "text-align" "center"
+    in
+        case model.state of
+            Loading ->
+                Shared.loading
+
+            Loaded stats ->
+                div
+                    []
+                    [ Html.h3 [] [ text "Last matches" ]
+                    , Table.table [ Options.css "width" "100%" ]
+                        [ Table.thead []
+                            [ Table.tr []
+                                [ Table.th [] [ text "Date" ]
+                                , Table.th [] [ text "Rival" ]
+                                , Table.th [] [ text "Result" ]
+                                ]
+                            ]
+                        , Table.tbody []
+                            (stats.recentMatches
+                                |> List.indexedMap
+                                    (\index match ->
+                                        Table.tr []
+                                            [ Table.td [] [ text (dateString match.date) ]
+                                            , Table.td [] [ text (rivalName model.user match) ]
+                                            , Table.td [] [ text (score model.user match) ]
+                                            ]
+                                    )
+                            )
+                        ]
+                    ]
+
+
+rivalName : User -> Api.Match -> String
+rivalName user match =
+    .name (rivalParticipation user match)
+
+
+score : User -> Api.Match -> String
+score user match =
+    String.join " - " <|
+        List.map toString <|
+            [ .goals (ownParticipation user match)
+            , .goals (rivalParticipation user match)
+            ]
+
+
+ownParticipation : User -> Api.Match -> Api.Participation
+ownParticipation user match =
+    if user.id == match.user1.id then
+        match.user1
+    else
+        match.user2
+
+
+rivalParticipation : User -> Api.Match -> Api.Participation
+rivalParticipation user match =
+    if user.id == match.user1.id then
+        match.user2
+    else
+        match.user1
