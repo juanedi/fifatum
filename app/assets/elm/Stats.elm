@@ -73,30 +73,35 @@ view model =
                 Shared.loading
 
             Loaded stats ->
-                div
-                    []
-                    [ Html.h3 [] [ text "Last matches" ]
-                    , Table.table [ Options.css "width" "100%" ]
-                        [ Table.thead []
-                            [ Table.tr []
-                                [ Table.th [] [ text "Date" ]
-                                , Table.th [] [ text "Rival" ]
-                                , Table.th [] [ text "Result" ]
-                                ]
-                            ]
-                        , Table.tbody []
-                            (stats.recentMatches
-                                |> List.indexedMap
-                                    (\index match ->
-                                        Table.tr []
-                                            [ Table.td [] [ text (dateString match.date) ]
-                                            , Table.td [] [ text (rivalName model.user match) ]
-                                            , Table.td [] [ text (score model.user match) ]
-                                            ]
-                                    )
-                            )
-                        ]
+                recentMatchesView model.user stats.recentMatches
+
+
+recentMatchesView : User -> List Api.Match -> Html Msg
+recentMatchesView user recentMatches =
+    div
+        []
+        [ Html.h3 [] [ text "Last matches" ]
+        , Table.table [ Options.css "width" "100%" ]
+            [ Table.thead []
+                [ Table.tr []
+                    [ Table.th [] [ text "Date" ]
+                    , Table.th [] [ text "Rival" ]
+                    , Table.th [] [ text "Result" ]
                     ]
+                ]
+            , Table.tbody []
+                (recentMatches
+                    |> List.indexedMap
+                        (\index match ->
+                            Table.tr []
+                                [ Table.td [] [ text (dateString match.date) ]
+                                , Table.td [] [ text (rivalName user match) ]
+                                , Table.td [] [ text (score user match) ]
+                                ]
+                        )
+                )
+            ]
+        ]
 
 
 rivalName : User -> Api.Match -> String
