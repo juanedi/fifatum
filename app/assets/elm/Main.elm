@@ -1,7 +1,6 @@
 module Main exposing (..)
 
 import Api
-import History
 import Html exposing (Html, div, text)
 import Html.App
 import Material
@@ -15,6 +14,7 @@ import NewMatch
 import Ranking
 import Return
 import Routing exposing (parser, Route(..))
+import Stats
 
 
 type alias Flags =
@@ -25,13 +25,13 @@ type Msg
     = Navigate Route
     | Mdl (Material.Msg Msg)
     | RankingMsg Ranking.Msg
-    | HistoryMsg History.Msg
+    | StatsMsg Stats.Msg
     | NewMatchMsg NewMatch.Msg
 
 
 type PageModel
     = NotFound
-    | HistoryModel History.Model
+    | StatsModel Stats.Model
     | RankingModel Ranking.Model
     | NewMatchModel NewMatch.Model
 
@@ -79,9 +79,9 @@ initPage flags route =
             NotFoundRoute ->
                 Return.singleton (initModel NotFound)
 
-            HistoryRoute ->
-                History.init flags.user
-                    |> Return.mapBoth HistoryMsg (HistoryModel >> initModel)
+            StatsRoute ->
+                Stats.init flags.user
+                    |> Return.mapBoth StatsMsg (StatsModel >> initModel)
 
             RankingRoute ->
                 Ranking.init
@@ -114,10 +114,10 @@ update msg model =
                             |> Return.map (setPageModel RankingModel)
                             |> Return.mapCmd RankingMsg
 
-                    ( HistoryModel pModel, HistoryMsg pMsg ) ->
-                        History.update pMsg pModel
-                            |> Return.map (setPageModel HistoryModel)
-                            |> Return.mapCmd HistoryMsg
+                    ( StatsModel pModel, StatsMsg pMsg ) ->
+                        Stats.update pMsg pModel
+                            |> Return.map (setPageModel StatsModel)
+                            |> Return.mapCmd StatsMsg
 
                     ( NewMatchModel pModel, NewMatchMsg pMsg ) ->
                         Return.singleton model
@@ -167,8 +167,8 @@ drawer model =
     in
         [ Layout.title [] [ text model.user.name ]
         , Layout.navigation []
-            [ menuLink "#ranking" "Ranking" RankingRoute
-            , menuLink "#history" "Historical" HistoryRoute
+            [ menuLink "#stats" "Stats" StatsRoute
+            , menuLink "#ranking" "Ranking" RankingRoute
             , Layout.link [ Layout.href "/logout" ] [ text "Logout" ]
             ]
         ]
@@ -182,8 +182,8 @@ body model =
                 NotFound ->
                     [ div [] [ text "ooops" ] ]
 
-                HistoryModel historyModel ->
-                    [ Html.App.map HistoryMsg (History.view historyModel)
+                StatsModel statsModel ->
+                    [ Html.App.map StatsMsg (Stats.view statsModel)
                     , newMatchButton 0 model
                     ]
 

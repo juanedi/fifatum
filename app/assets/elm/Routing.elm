@@ -12,7 +12,7 @@ import UrlParser exposing (..)
 
 type Route
     = RankingRoute
-    | HistoryRoute
+    | StatsRoute
     | NewMatchRoute
     | NotFoundRoute
 
@@ -27,8 +27,9 @@ locationParser location =
     let
         matchers =
             oneOf
-                [ format RankingRoute (oneOf [ (s ""), (s "ranking") ])
-                , format HistoryRoute (s "history")
+                [ format StatsRoute (s "")
+                , format StatsRoute (s "stats")
+                , format RankingRoute (s "ranking")
                 , format NewMatchRoute (s "match")
                 ]
     in
@@ -49,8 +50,8 @@ routeToPath route =
         RankingRoute ->
             "#ranking"
 
-        HistoryRoute ->
-            "#history"
+        StatsRoute ->
+            "#stats"
 
         NewMatchRoute ->
             "#match"

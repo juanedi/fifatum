@@ -1,4 +1,4 @@
-module History
+module Stats
     exposing
         ( Model
         , Msg
