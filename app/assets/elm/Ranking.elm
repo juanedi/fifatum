@@ -71,8 +71,7 @@ view model =
             Loaded ranking ->
                 div
                     []
-                    [ Html.h3 [] [ text "Ranking" ]
-                    , Table.table [ Options.css "width" "100%" ]
+                    [ Table.table [ Options.css "width" "100%" ]
                         [ Table.thead []
                             [ Table.tr []
                                 [ Table.th [ center ] [ text "Position" ]

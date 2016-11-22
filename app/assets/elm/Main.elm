@@ -14,6 +14,7 @@ import NewMatch
 import Ranking
 import Return
 import Routing exposing (parser, Route(..))
+import Shared
 import Stats
 
 
@@ -145,14 +146,6 @@ view model =
         }
 
 
-header : Model -> List (Html Msg)
-header model =
-    [ Layout.row []
-        [ Layout.title [] [ text "fifa-stats" ]
-        ]
-    ]
-
-
 drawer : Model -> List (Html Msg)
 drawer model =
     let
@@ -172,6 +165,23 @@ drawer model =
             , Layout.link [ Layout.href "/logout" ] [ text "Logout" ]
             ]
         ]
+
+
+header : Model -> List (Html Msg)
+header model =
+    case model.pageModel of
+        NotFound ->
+            []
+
+        StatsModel statsModel ->
+            Stats.header statsModel
+                |> List.map (Html.App.map StatsMsg)
+
+        RankingModel rankingModel ->
+            Shared.titleHeader "Ranking"
+
+        NewMatchModel newMatchModel ->
+            Shared.titleHeader "Friendly match"
 
 
 body : Model -> List (Html Msg)

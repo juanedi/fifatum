@@ -1,8 +1,21 @@
-module Shared exposing (loading)
+module Shared
+    exposing
+        ( loading
+        , titleHeader
+        )
 
-import Html exposing (div, text)
+import Html exposing (Html, div, text)
 import Html.Attributes
+import Material.Layout as Layout
 import Material.Progress as Progress
+
+
+titleHeader : String -> List (Html msg)
+titleHeader title =
+    [ Layout.row []
+        [ Layout.title [] [ text title ]
+        ]
+    ]
 
 
 loading =

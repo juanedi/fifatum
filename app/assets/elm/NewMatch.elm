@@ -24,4 +24,4 @@ init =
 
 view : Model -> Html a
 view model =
-    Html.h3 [] [ Html.text "New match" ]
+    Html.h4 [] [ Html.text "TO-DO :)" ]

@@ -4,14 +4,16 @@ module Stats
         , Msg
         , init
         , update
+        , header
         , view
         )
 
 import Api exposing (User)
-import Date exposing (Date)
 import Html exposing (Html, div, text)
 import Material
-import Material.Options as Options
+import Material.Layout as Layout
+import Material.Menu as Menu
+import Material.Options as Options exposing (css)
 import Material.Table as Table
 import Return
 import Shared
@@ -62,6 +64,45 @@ update msg model =
             Return.singleton model
 
 
+header : Model -> List (Html Msg)
+header model =
+    let
+        menu =
+            Menu.render Mdl
+                [ mdlIds.menu ]
+                model.mdl
+                [ Menu.ripple
+                , Menu.bottomRight
+                , css "position" "absolute"
+                , css "right" "16px"
+                ]
+                [ Menu.item
+                    [ Menu.disabled ]
+                    [ text "Versus" ]
+                , Menu.item
+                    [ Menu.disabled ]
+                    [ text "Awards" ]
+                ]
+    in
+        [ Layout.row []
+            [ Layout.title [] [ text "Stats" ]
+            , Options.div
+                [ css "box-sizing" "border-box"
+                , css "width" "100%"
+                , css "padding" "16px"
+                , css "height" "64px"
+                ]
+                [ Options.div
+                    [ css "box-sizing" "border-box"
+                    , css "position" "absolute"
+                    , css "right" "16px"
+                    ]
+                    [ menu ]
+                ]
+            ]
+        ]
+
+
 view : Model -> Html Msg
 view model =
     let
@@ -80,7 +121,7 @@ recentMatchesView : User -> List Api.Match -> Html Msg
 recentMatchesView user recentMatches =
     div
         []
-        [ Html.h3 [] [ text "Last matches" ]
+        [ Html.h4 [] [ text "Last matches" ]
         , Table.table [ Options.css "width" "100%" ]
             [ Table.thead []
                 [ Table.tr []
@@ -132,3 +173,8 @@ rivalParticipation user match =
         match.user2
     else
         match.user1
+
+
+mdlIds =
+    { menu = 1
+    }
