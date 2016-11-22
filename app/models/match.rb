@@ -19,13 +19,13 @@ class Match < ActiveRecord::Base
         "id" => user1.id,
         "name" => user1.name,
         "team" => { "id" => team1.id, "name" => team1.name },
-        "goals" => 3
+        "goals" => user1_goals
       },
       "user2" => {
         "id" => user2.id,
         "name" => user2.name,
         "team" => { "id" => team2.id, "name" => team2.name },
-        "goals" => 1
+        "goals" => user2_goals
       }
     }
   end

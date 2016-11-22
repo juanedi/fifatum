@@ -2,8 +2,8 @@ module Api
     exposing
         ( Ranking
         , fetchRanking
-        , History
-        , fetchUserHistory
+        , Stats
+        , fetchStats
         )
 
 import Http
@@ -17,10 +17,6 @@ type alias Ranking =
 
 type alias RankingEntry =
     { name : String, lastMatch : String }
-
-
-type alias History =
-    List Match
 
 
 type alias Match =
@@ -44,17 +40,19 @@ type alias Team =
     }
 
 
+type alias Stats =
+    { recentMatches : List Match }
+
+
 fetchRanking : (Http.Error -> msg) -> (Ranking -> msg) -> Cmd msg
 fetchRanking errorTagger okTagger =
-    "/api/ranking"
-        |> Http.get (list rankingEntryDecoder)
+    Http.get (list rankingEntryDecoder) "/api/ranking"
         |> Task.perform errorTagger okTagger
 
 
-fetchUserHistory : (Http.Error -> msg) -> (History -> msg) -> Cmd msg
-fetchUserHistory errorTagger okTagger =
-    "/api/history/user"
-        |> Http.get (list matchDecoder)
+fetchStats : (Http.Error -> msg) -> (Stats -> msg) -> Cmd msg
+fetchStats errorTagger okTagger =
+    Http.get statsDecoder "/api/stats"
         |> Task.perform errorTagger okTagger
 
 
@@ -63,6 +61,12 @@ rankingEntryDecoder =
     Decode.object2 RankingEntry
         ("name" := string)
         ("lastMatch" := string)
+
+
+statsDecoder : Decode.Decoder Stats
+statsDecoder =
+    Decode.object1 Stats
+        ("recentMatches" := (list matchDecoder))
 
 
 matchDecoder : Decode.Decoder Match

@@ -14,6 +14,8 @@ RSpec.describe ApiController do
 
   let(:current_user) { User.find_by_email("john@example.com") }
   let(:other_user)   { User.find_by_email("mike@example.com") }
+  let(:t1)   { Team.first }
+  let(:t2)   { Team.last }
 
   context "user is not authenticated" do
     it "redirects user to log in" do
@@ -43,25 +45,14 @@ RSpec.describe ApiController do
       ])
     end
 
-    it "provides access to the current user's match history" do
-      get :user_history
+    describe "stats" do
+      it "returns all relevant match information" do
+        match = Match.create(
+          user1_id: current_user.id, user1_team_id: t1.id, user1_goals: 3,
+          user2_id: other_user.id, user2_team_id: t2.id, user2_goals: 1
+        )
 
-      expect(response.code.to_i).to eq(200)
-      expect(json_response).to eq([])
-
-      t1 = Team.first
-      t2 = Team.last
-
-      match = Match.create!(
-        user1_id: current_user.id, user1_team_id: t1.id, user1_goals: 3,
-        user2_id: other_user.id, user2_team_id: t2.id, user2_goals: 1
-      )
-
-      get :user_history
-
-      expect(response.code.to_i).to eq(200)
-      expect(json_response).to eq([
-        {
+        expect(match.api_json).to eq({
           "id" => match.id,
           "user1" => {
             "id" => current_user.id,
@@ -75,8 +66,49 @@ RSpec.describe ApiController do
             "team" => { "id" => t2.id, "name" => t2.name },
             "goals" => 1
           }
-        }
-      ])
+        })
+      end
+
+      describe "recent matches" do
+        it "lists the current user's matches" do
+          get :stats
+
+          expect(response.code.to_i).to eq(200)
+          expect(json_response["recentMatches"]).to eq([])
+
+          match1 = Match.create!(
+            user1_id: current_user.id, user1_team_id: t1.id, user1_goals: 3,
+            user2_id: other_user.id, user2_team_id: t2.id, user2_goals: 1
+          )
+
+          match2 = Match.create!(
+            user1_id: other_user.id, user1_team_id: t1.id, user1_goals: 1,
+            user2_id: current_user.id, user2_team_id: t2.id, user2_goals: 0
+          )
+
+          get :stats
+
+          expect(response.code.to_i).to eq(200)
+          expect(json_response["recentMatches"]).to eq([
+            match2.api_json,
+            match1.api_json
+          ])
+        end
+
+        it "returns the last 10 matches" do
+          15.times do
+            Match.create!(
+              user1_id: current_user.id, user1_team_id: t1.id, user1_goals: 3,
+              user2_id: other_user.id, user2_team_id: t2.id, user2_goals: 1
+            )
+          end
+
+          get :stats
+
+          ids = json_response["recentMatches"].map { |m| m["id"] }
+          expect(ids).to eq(Match.order(created_at: :desc).limit(10).map(&:id))
+        end
+      end
     end
   end
 

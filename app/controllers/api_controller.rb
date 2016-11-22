@@ -3,6 +3,7 @@ class ApiController < ApplicationController
   before_action :authenticate
 
   def ranking
+    # TODO
     render json:
              [ { name: "Player 1", lastMatch: "2016-11-15" },
                { name: "Player 2", lastMatch: "2016-11-19" },
@@ -10,9 +11,14 @@ class ApiController < ApplicationController
              ]
   end
 
-  def user_history
+  def stats
     matches = Match.of_user(@current_user)
-    render json: matches.map(&:api_json)
+                   .order(created_at: :desc)
+                   .limit(10)
+
+    render json: {
+      "recentMatches" => matches.map(&:api_json)
+    }
   end
 
   private

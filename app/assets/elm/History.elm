@@ -15,7 +15,7 @@ import Shared
 
 type State
     = Loading
-    | Loaded Api.History
+    | Loaded Api.Stats
 
 
 type alias Model =
@@ -23,14 +23,14 @@ type alias Model =
 
 
 type Msg
-    = FetchOk Api.History
+    = FetchOk Api.Stats
     | FetchFailed
 
 
 init : ( Model, Cmd Msg )
 init =
     Return.singleton { state = Loading }
-        |> Return.command (Api.fetchUserHistory (always FetchFailed) FetchOk)
+        |> Return.command (Api.fetchStats (always FetchFailed) FetchOk)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
