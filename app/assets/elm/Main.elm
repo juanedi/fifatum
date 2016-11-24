@@ -89,7 +89,7 @@ initPage flags route =
                     |> Return.mapBoth RankingMsg (RankingModel >> initModel)
 
             NewMatchRoute ->
-                NewMatch.init
+                NewMatch.init flags.user
                     |> Return.mapBoth NewMatchMsg (NewMatchModel >> initModel)
 
 
@@ -121,7 +121,9 @@ update msg model =
                             |> Return.mapCmd StatsMsg
 
                     ( NewMatchModel pModel, NewMatchMsg pMsg ) ->
-                        Return.singleton model
+                        NewMatch.update pMsg pModel
+                            |> Return.map (setPageModel NewMatchModel)
+                            |> Return.mapCmd NewMatchMsg
 
                     _ ->
                         Return.singleton model
@@ -203,7 +205,7 @@ body model =
                     ]
 
                 NewMatchModel newMatchModel ->
-                    [ NewMatch.view newMatchModel ]
+                    [ Html.App.map NewMatchMsg (NewMatch.view newMatchModel) ]
             )
         ]
     ]

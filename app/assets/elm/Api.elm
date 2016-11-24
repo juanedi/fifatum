@@ -1,12 +1,18 @@
 module Api
     exposing
         ( User
+        , fetchUsers
         , Match
         , Participation
         , Ranking
         , fetchRanking
         , Stats
         , fetchStats
+        , League
+        , fetchLeagues
+        , Team
+        , fetchRecentTeams
+        , fetchTeams
         )
 
 import Date exposing (Date)
@@ -26,7 +32,9 @@ type alias Ranking =
 
 
 type alias RankingEntry =
-    { name : String, lastMatch : String }
+    { name : String
+    , lastMatch : String
+    }
 
 
 type alias Match =
@@ -45,6 +53,12 @@ type alias Participation =
     }
 
 
+type alias League =
+    { id : Int
+    , name : String
+    }
+
+
 type alias Team =
     { id : Int
     , name : String
@@ -53,6 +67,12 @@ type alias Team =
 
 type alias Stats =
     { recentMatches : List Match }
+
+
+fetchUsers : (Http.Error -> msg) -> (List User -> msg) -> Cmd msg
+fetchUsers errorTagger okTagger =
+    Http.get (list userDecoder) "/api/users"
+        |> Task.perform errorTagger okTagger
 
 
 fetchRanking : (Http.Error -> msg) -> (Ranking -> msg) -> Cmd msg
@@ -65,6 +85,45 @@ fetchStats : (Http.Error -> msg) -> (Stats -> msg) -> Cmd msg
 fetchStats errorTagger okTagger =
     Http.get statsDecoder "/api/stats"
         |> Task.perform errorTagger okTagger
+
+
+fetchLeagues : (Http.Error -> msg) -> (List League -> msg) -> Cmd msg
+fetchLeagues errorTagger okTagger =
+    Http.get (list leagueDecoder) "/api/leagues"
+        |> Task.perform errorTagger okTagger
+
+
+fetchRecentTeams : (Http.Error -> msg) -> (List Team -> msg) -> User -> Cmd msg
+fetchRecentTeams errorTagger okTagger user =
+    let
+        url =
+            ("/api/users/" ++ (toString user.id) ++ "/recent_teams")
+
+        decoder =
+            list teamDecoder
+    in
+        Http.get decoder url
+            |> Task.perform errorTagger okTagger
+
+
+fetchTeams : (Http.Error -> msg) -> (List Team -> msg) -> League -> Cmd msg
+fetchTeams errorTagger okTagger league =
+    let
+        url =
+            ("/api/leagues/" ++ (toString league.id) ++ "/teams")
+
+        decoder =
+            list teamDecoder
+    in
+        Http.get decoder url
+            |> Task.perform errorTagger okTagger
+
+
+userDecoder : Decode.Decoder User
+userDecoder =
+    Decode.object2 User
+        ("id" := int)
+        ("name" := string)
 
 
 rankingEntryDecoder : Decode.Decoder RankingEntry
@@ -96,6 +155,13 @@ participationDecoder =
         ("name" := string)
         ("team" := teamDecoder)
         ("goals" := int)
+
+
+leagueDecoder : Decode.Decoder Team
+leagueDecoder =
+    Decode.object2 League
+        ("id" := int)
+        ("name" := string)
 
 
 teamDecoder : Decode.Decoder Team

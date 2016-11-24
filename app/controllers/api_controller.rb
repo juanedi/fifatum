@@ -11,6 +11,14 @@ class ApiController < ApplicationController
              ]
   end
 
+  def users
+    render json: User.all.map(&:api_json)
+  end
+
+  def recent_teams
+    render json: User.find(params[:id]).recent_teams(5).map(&:api_json)
+  end
+
   def stats
     matches = Match.of_user(@current_user)
                    .order(created_at: :desc)
@@ -19,6 +27,14 @@ class ApiController < ApplicationController
     render json: {
       "recentMatches" => matches.map(&:api_json)
     }
+  end
+
+  def leagues
+    render json: League.all.map(&:api_json)
+  end
+
+  def league_teams
+    render json: Team.where(league_id: params[:id]).map(&:api_json)
   end
 
   private

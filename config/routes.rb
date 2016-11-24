@@ -7,8 +7,12 @@ Rails.application.routes.draw do
   get '/logout' => 'login#logout'
 
   scope :api do
+    get 'users', to: 'api#users'
+    get 'users/:id/recent_teams', to: 'api#recent_teams'
     get 'ranking', to: 'api#ranking'
     get 'stats', to: 'api#stats'
+    get 'leagues', to: 'api#leagues'
+    get 'leagues/:id/teams', to: 'api#league_teams'
   end
 
 end

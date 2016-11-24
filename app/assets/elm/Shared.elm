@@ -2,12 +2,16 @@ module Shared
     exposing
         ( loading
         , titleHeader
+        , onSelect
         )
 
 import Html exposing (Html, div, text)
 import Html.Attributes
+import Html.Events as Events
+import Json.Decode
 import Material.Layout as Layout
 import Material.Progress as Progress
+import String
 
 
 titleHeader : String -> List (Html msg)
@@ -37,3 +41,15 @@ loading =
             [ Progress.indeterminate
             ]
         ]
+
+
+onSelect : (Int -> msg) -> Html.Attribute msg
+onSelect msg =
+    let
+        decoder =
+            Json.Decode.at [ "target", "value" ] Json.Decode.string
+                |> Json.Decode.map String.toInt
+                |> Json.Decode.map (Result.withDefault (-1))
+                |> Json.Decode.map msg
+    in
+        Events.on "change" decoder

@@ -13,7 +13,7 @@ class ApplicationController < ActionController::Base
   end
 
   def check_user
-    unless session[:user_id]
+    unless session[:user_id] && User.exists?(session[:user_id])
       redirect_to login_start_path
       return false
     end

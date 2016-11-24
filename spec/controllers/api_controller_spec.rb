@@ -14,8 +14,9 @@ RSpec.describe ApiController do
 
   let(:current_user) { User.find_by_email("john@example.com") }
   let(:other_user)   { User.find_by_email("mike@example.com") }
-  let(:t1)   { Team.first }
-  let(:t2)   { Team.last }
+  let(:league)   { League.first }
+  let(:t1)       { Team.first }
+  let(:t2)       { Team.last }
 
   context "user is not authenticated" do
     it "redirects user to log in" do
@@ -108,6 +109,45 @@ RSpec.describe ApiController do
 
           ids = json_response["recentMatches"].map { |m| m["id"] }
           expect(ids).to eq(Match.order(created_at: :desc).limit(10).map(&:id))
+        end
+      end
+    end
+
+    describe "users" do
+      describe "user format" do
+        it "includes name and id" do
+          expect(current_user.api_json).to eq({
+            "id" => current_user.id,
+            "name" => current_user.name
+          })
+        end
+      end
+
+      it "returns all users" do
+        get :users
+        expect(json_response).to eq([current_user.api_json, other_user.api_json])
+      end
+    end
+
+    describe "leagues" do
+      describe "league format" do
+        it "includes name and id" do
+          expect(league.api_json).to eq({
+            "id" => league.id,
+            "name" => league.name
+          })
+        end
+      end
+
+      it "returns all leagues with their names and ids" do
+        get :leagues
+        expect(json_response).to eq([league.api_json])
+      end
+
+      describe "league_teams" do
+        it "returns a league's teams" do
+          get :league_teams, params: { id: league.id }
+          expect(json_response).to eq([t1.api_json, t2.api_json])
         end
       end
     end
