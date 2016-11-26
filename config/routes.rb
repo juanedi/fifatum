@@ -13,6 +13,7 @@ Rails.application.routes.draw do
     get 'stats', to: 'api#stats'
     get 'leagues', to: 'api#leagues'
     get 'leagues/:id/teams', to: 'api#league_teams'
+    post 'matches', to: 'api#report_match'
   end
 
 end

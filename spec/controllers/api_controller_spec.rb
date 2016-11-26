@@ -151,6 +151,42 @@ RSpec.describe ApiController do
         end
       end
     end
+
+    describe "reporting matches" do
+      it "created a new record in the database" do
+        expect {
+          post :report_match, params: {
+                 rival_id: other_user.id,
+                 own_goals: 1,
+                 rival_goals: 2,
+                 own_team_id: t1.id,
+                 rival_team_id: t2.id
+               }
+        }.to change { Match.count }.from(0).to(1)
+
+        match = Match.first
+
+        expect(match.user1_id).to eq(current_user.id)
+        expect(match.user2_id).to eq(other_user.id)
+        expect(match.user1_goals).to eq(1)
+        expect(match.user2_goals).to eq(2)
+        expect(match.team1.id).to eq(t1.id)
+        expect(match.team2.id).to eq(t2.id)
+      end
+
+      it "fails if both user ids match" do
+        post :report_match, params: {
+               rival_id: current_user.id,
+               own_goals: 1,
+               rival_goals: 2,
+               own_team_id: t1.id,
+               rival_team_id: t2.id
+             }
+
+        expect(response.code).to eq("400")
+        expect(Match.count).to eq(0)
+      end
+    end
   end
 
 
