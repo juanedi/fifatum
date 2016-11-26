@@ -525,7 +525,7 @@ expandedSelectionView model state =
         , div
             [ style [ ( "text-align", "center" ), ( "margin-top", "40px" ) ]
             ]
-            [ mainActionButton model.mdl mdlIds.teamSelectionDone "Done" [ Button.onClick (MExpandedSelection Done) ] ]
+            [ mainActionButton model.mdl mdlIds.expandedSelectionDone "Done" [ Button.onClick (MExpandedSelection Done) ] ]
         ]
 
 
@@ -567,4 +567,5 @@ mdlIds =
     { teamSelectionDone = 1
     , teamSelection1 = 2
     , teamSelection2 = 3
+    , expandedSelectionDone = 4
     }
