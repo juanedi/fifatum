@@ -19,14 +19,10 @@ import Shared
 
 
 type State
-    = Loading
-        { ownRecentTeams : Maybe (List Team)
-        , otherUsers : Maybe (List User)
-        , leagues : Maybe (List League)
-        }
+    = Loading LoadingState
     | NoData String
     | TeamSelection TeamSelectionState
-    | FullTeamSelection FullTeamSelectionState
+    | ExpandedSelection ExpandedSelectionState
     | Scoring
         { rival : User
         , ownTeam : Team
@@ -34,6 +30,13 @@ type State
         , ownScore : Int
         , rivalScore : Int
         }
+
+
+type alias LoadingState =
+    { ownRecentTeams : Maybe (List Team)
+    , otherUsers : Maybe (List User)
+    , leagues : Maybe (List League)
+    }
 
 
 type alias TeamSelectionState =
@@ -47,7 +50,7 @@ type alias TeamSelectionState =
     }
 
 
-type alias FullTeamSelectionState =
+type alias ExpandedSelectionState =
     { target : TeamTarget
     , context : TeamSelectionState
     , league : League
@@ -65,21 +68,29 @@ type alias Model =
 
 type Msg
     = Mdl (Material.Msg Msg)
-    | FetchedOwnRecentTeams (List User)
-    | FetchedOtherUsers (List User)
-    | FetchedRivalRecentTeams (List User)
-    | FetchedLeagues (List League)
     | FetchFailed
+    | MLoading LoadingMsg
+    | MTeamSelection TeamSelectMsg
+    | MExpandedSelection ExpandedSelectionMsg
+
+
+type LoadingMsg
+    = FetchedOtherUsers (List User)
+    | FetchedOwnRecentTeams (List Team)
+    | FetchedLeagues (List League)
+
+
+type TeamSelectMsg
+    = FetchedRivalRecentTeams (List Team)
     | RivalChanged Int
     | TeamChange TeamTarget Team
     | TeamSelectionDone Team Team
-    | TeamFullSelect TeamTarget
-    | FullSelect FullSelectMsg
+    | ExpandSelection TeamTarget
 
 
-type FullSelectMsg
+type ExpandedSelectionMsg
     = LeagueChange League
-    | FullTeamChange Team
+    | TeamChangedExpanded Team
     | FetchedTeams (List Team)
     | Done
 
@@ -96,9 +107,9 @@ init user =
         , user = user
         , state = Loading { ownRecentTeams = Nothing, otherUsers = Nothing, leagues = Nothing }
         }
-        |> command (Api.fetchUsers (always FetchFailed) FetchedOtherUsers)
-        |> command (Api.fetchRecentTeams (always FetchFailed) FetchedOwnRecentTeams user)
-        |> command (Api.fetchLeagues (always FetchFailed) FetchedLeagues)
+        |> command (Api.fetchUsers (always FetchFailed) (MLoading << FetchedOtherUsers))
+        |> command (Api.fetchRecentTeams (always FetchFailed) (MLoading << FetchedOwnRecentTeams) user)
+        |> command (Api.fetchLeagues (always FetchFailed) (MLoading << FetchedLeagues))
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -112,168 +123,171 @@ update msg model =
             singleton model
 
         _ ->
-            case model.state of
-                Loading loadingState ->
-                    case msg of
-                        FetchedOwnRecentTeams teams ->
-                            { model | state = Loading { loadingState | ownRecentTeams = Just (List.sortBy .name teams) } }
-                                |> goToSetupIfReady
+            case ( model.state, msg ) of
+                ( Loading state, MLoading msg ) ->
+                    updateLoading model state msg
 
-                        FetchedOtherUsers users ->
-                            let
-                                otherUsers =
-                                    users
-                                        |> List.filter (\u -> u.id /= model.user.id)
-                                        |> List.sortBy .name
-                            in
-                                case otherUsers of
-                                    [] ->
-                                        singleton { model | state = NoData "There are no rivals to play against." }
-
-                                    r :: rs ->
-                                        { model | state = Loading { loadingState | otherUsers = Just otherUsers } }
-                                            |> goToSetupIfReady
-
-                        FetchedLeagues leagues ->
-                            if List.isEmpty leagues then
-                                singleton { model | state = NoData "There are no teams." }
-                            else
-                                { model | state = Loading { loadingState | leagues = Just (List.sortBy .name leagues) } }
-                                    |> goToSetupIfReady
-
-                        _ ->
-                            singleton model
-
-                NoData _ ->
+                ( NoData _, _ ) ->
                     singleton model
 
-                TeamSelection state ->
-                    let
-                        setState s =
-                            singleton { model | state = TeamSelection s }
-                    in
-                        case msg of
-                            FetchedRivalRecentTeams teams ->
-                                let
-                                    sorted =
-                                        List.sortBy .name teams
-                                in
-                                    setState
-                                        { state
-                                            | rivalTeam = List.head sorted
-                                            , rivalRecentTeams = Just sorted
-                                        }
+                ( TeamSelection state, MTeamSelection msg ) ->
+                    updateTeamSelection model state msg
 
-                            RivalChanged userId ->
-                                let
-                                    rival =
-                                        state.otherUsers
-                                            |> List.filter (\u -> u.id == userId)
-                                            |> List.head
-                                in
-                                    case rival of
-                                        Nothing ->
-                                            Debug.crash "Selected an invalid option"
+                ( ExpandedSelection state, MExpandedSelection msg ) ->
+                    updateExpandedSelection model state msg
 
-                                        Just rival ->
-                                            setState { state | rival = rival, rivalRecentTeams = Nothing }
-                                                |> command (Api.fetchRecentTeams (always FetchFailed) FetchedRivalRecentTeams rival)
-
-                            TeamChange Own team ->
-                                setState { state | ownTeam = Just team }
-
-                            TeamChange Rival team ->
-                                setState { state | rivalTeam = Just team }
-
-                            TeamFullSelect target ->
-                                initFullSelection model state target
-
-                            TeamSelectionDone ownTeam rivalTeam ->
-                                singleton
-                                    { model
-                                        | state =
-                                            Scoring
-                                                { rival = state.rival
-                                                , ownTeam = ownTeam
-                                                , rivalTeam = rivalTeam
-                                                , ownScore = 0
-                                                , rivalScore = 0
-                                                }
-                                    }
-
-                            _ ->
-                                singleton model
-
-                FullTeamSelection state ->
-                    let
-                        setState s =
-                            singleton { model | state = FullTeamSelection s }
-                    in
-                        case msg of
-                            FullSelect msg ->
-                                case msg of
-                                    LeagueChange league ->
-                                        setState { state | league = league, selection = Nothing }
-                                            |> command (Api.fetchTeams (always FetchFailed) (FullSelect << FetchedTeams) league)
-
-                                    FullTeamChange team ->
-                                        setState { state | selection = Just team }
-
-                                    FetchedTeams teams ->
-                                        let
-                                            sorted =
-                                                List.sortBy .name teams
-                                        in
-                                            setState { state | teams = sorted, selection = List.head sorted }
-
-                                    Done ->
-                                        let
-                                            context =
-                                                state.context
-
-                                            setState s =
-                                                singleton { model | state = TeamSelection s }
-
-                                            addTeam team maybeList =
-                                                Maybe.withDefault [] maybeList
-                                                    |> (\l ->
-                                                            if (List.member team l) then
-                                                                l
-                                                            else
-                                                                team :: l
-                                                       )
-                                                    |> List.sortBy .name
-                                        in
-                                            case state.selection of
-                                                Nothing ->
-                                                    Debug.crash "invalid state"
-
-                                                Just team ->
-                                                    case state.target of
-                                                        Own ->
-                                                            setState
-                                                                { context
-                                                                    | ownRecentTeams = addTeam team (Just state.context.ownRecentTeams)
-                                                                    , ownTeam = state.selection
-                                                                }
-
-                                                        Rival ->
-                                                            setState
-                                                                { context
-                                                                    | rivalRecentTeams = Just (addTeam team (state.context.rivalRecentTeams))
-                                                                    , rivalTeam = state.selection
-                                                                }
-
-                            _ ->
-                                Debug.crash "Invalid state"
-
-                Scoring _ ->
+                ( Scoring _, _ ) ->
                     -- TODO
                     singleton model
 
+                _ ->
+                    Debug.crash "invalid state"
 
-initFullSelection : Model -> TeamSelectionState -> TeamTarget -> ( Model, Cmd Msg )
-initFullSelection model state target =
+
+updateLoading : Model -> LoadingState -> LoadingMsg -> ( Model, Cmd Msg )
+updateLoading model state msg =
+    initTeamSelectionWhenReady <|
+        case msg of
+            FetchedOwnRecentTeams teams ->
+                { model | state = Loading { state | ownRecentTeams = Just (List.sortBy .name teams) } }
+
+            FetchedOtherUsers users ->
+                let
+                    otherUsers =
+                        users
+                            |> List.filter (\u -> u.id /= model.user.id)
+                            |> List.sortBy .name
+                in
+                    if List.isEmpty otherUsers then
+                        { model | state = NoData "There are no rivals to play against." }
+                    else
+                        { model | state = Loading { state | otherUsers = Just otherUsers } }
+
+            FetchedLeagues leagues ->
+                if List.isEmpty leagues then
+                    { model | state = NoData "There are no teams." }
+                else
+                    { model | state = Loading { state | leagues = Just (List.sortBy .name leagues) } }
+
+
+updateTeamSelection : Model -> TeamSelectionState -> TeamSelectMsg -> ( Model, Cmd Msg )
+updateTeamSelection model state msg =
+    let
+        setState s =
+            singleton { model | state = TeamSelection s }
+    in
+        case msg of
+            FetchedRivalRecentTeams teams ->
+                let
+                    sorted =
+                        List.sortBy .name teams
+                in
+                    setState
+                        { state
+                            | rivalTeam = List.head sorted
+                            , rivalRecentTeams = Just sorted
+                        }
+
+            RivalChanged userId ->
+                let
+                    rival =
+                        state.otherUsers
+                            |> List.filter (\u -> u.id == userId)
+                            |> List.head
+                in
+                    case rival of
+                        Nothing ->
+                            Debug.crash "Selected an invalid option"
+
+                        Just rival ->
+                            setState { state | rival = rival, rivalRecentTeams = Nothing }
+                                |> command (Api.fetchRecentTeams (always FetchFailed) (MTeamSelection << FetchedRivalRecentTeams) rival)
+
+            TeamChange Own team ->
+                setState { state | ownTeam = Just team }
+
+            TeamChange Rival team ->
+                setState { state | rivalTeam = Just team }
+
+            ExpandSelection target ->
+                initExpandedSelection model state target
+
+            TeamSelectionDone ownTeam rivalTeam ->
+                singleton
+                    { model
+                        | state =
+                            Scoring
+                                { rival = state.rival
+                                , ownTeam = ownTeam
+                                , rivalTeam = rivalTeam
+                                , ownScore = 0
+                                , rivalScore = 0
+                                }
+                    }
+
+
+updateExpandedSelection : Model -> ExpandedSelectionState -> ExpandedSelectionMsg -> ( Model, Cmd Msg )
+updateExpandedSelection model state msg =
+    let
+        setState s =
+            singleton { model | state = ExpandedSelection s }
+    in
+        case msg of
+            LeagueChange league ->
+                setState { state | league = league, selection = Nothing }
+                    |> command (Api.fetchTeams (always FetchFailed) (MExpandedSelection << FetchedTeams) league)
+
+            TeamChangedExpanded team ->
+                setState { state | selection = Just team }
+
+            FetchedTeams teams ->
+                let
+                    sorted =
+                        List.sortBy .name teams
+                in
+                    setState { state | teams = sorted, selection = List.head sorted }
+
+            Done ->
+                let
+                    context =
+                        state.context
+
+                    setState s =
+                        singleton { model | state = TeamSelection s }
+
+                    addTeam team maybeList =
+                        Maybe.withDefault [] maybeList
+                            |> (\l ->
+                                    if (List.member team l) then
+                                        l
+                                    else
+                                        team :: l
+                               )
+                            |> List.sortBy .name
+                in
+                    case state.selection of
+                        Nothing ->
+                            Debug.crash "invalid state"
+
+                        Just team ->
+                            case state.target of
+                                Own ->
+                                    setState
+                                        { context
+                                            | ownRecentTeams = addTeam team (Just state.context.ownRecentTeams)
+                                            , ownTeam = state.selection
+                                        }
+
+                                Rival ->
+                                    setState
+                                        { context
+                                            | rivalRecentTeams = Just (addTeam team (state.context.rivalRecentTeams))
+                                            , rivalTeam = state.selection
+                                        }
+
+
+initExpandedSelection : Model -> TeamSelectionState -> TeamTarget -> ( Model, Cmd Msg )
+initExpandedSelection model state target =
     case state.leagues of
         [] ->
             Debug.crash "Invalid state"
@@ -282,7 +296,7 @@ initFullSelection model state target =
             singleton
                 { model
                     | state =
-                        FullTeamSelection
+                        ExpandedSelection
                             { target = target
                             , context = state
                             , league = l
@@ -290,11 +304,11 @@ initFullSelection model state target =
                             , selection = Nothing
                             }
                 }
-                |> command (Api.fetchTeams (always FetchFailed) (FullSelect << FetchedTeams) l)
+                |> command (Api.fetchTeams (always FetchFailed) (MExpandedSelection << FetchedTeams) l)
 
 
-goToSetupIfReady : Model -> ( Model, Cmd Msg )
-goToSetupIfReady model =
+initTeamSelectionWhenReady : Model -> ( Model, Cmd Msg )
+initTeamSelectionWhenReady model =
     case model.state of
         Loading { ownRecentTeams, otherUsers, leagues } ->
             case ( ownRecentTeams, otherUsers, leagues ) of
@@ -312,7 +326,7 @@ goToSetupIfReady model =
                                     , rivalTeam = Nothing
                                     }
                         }
-                        |> command (Api.fetchRecentTeams (always FetchFailed) FetchedRivalRecentTeams r)
+                        |> command (Api.fetchRecentTeams (always FetchFailed) (MTeamSelection << FetchedRivalRecentTeams) r)
 
                 _ ->
                     singleton model
@@ -345,9 +359,9 @@ view model =
                 column <|
                     teamSelectionView model state
 
-            FullTeamSelection state ->
+            ExpandedSelection state ->
                 column <|
-                    fullTeamSelectionView model state
+                    expandedSelectionView model state
 
             Scoring state ->
                 column <|
@@ -384,7 +398,7 @@ teamSelectionView model state =
                         , Button.disabled
                             `Options.when` disabled
                         , Button.onClick
-                            (TeamFullSelect target)
+                            (MTeamSelection (ExpandSelection target))
                         ]
                         [ text "Select" ]
             in
@@ -415,8 +429,8 @@ teamSelectionView model state =
                             onSelect id =
                                 List.filter (\t -> t.id == id) teams
                                     |> List.head
-                                    |> Maybe.map (TeamChange target)
-                                    |> Maybe.withDefault (TeamFullSelect target)
+                                    |> Maybe.map (MTeamSelection << TeamChange target)
+                                    |> Maybe.withDefault (MTeamSelection (ExpandSelection target))
                         in
                             select [ id comboId, style comboStyles, Shared.onSelect onSelect ] <|
                                 (List.map teamComboOption teams)
@@ -428,7 +442,7 @@ teamSelectionView model state =
             ]
         , div [ style [ ( "flex-grow", "1" ) ] ]
             [ fieldLabel "select-rival" "Rival"
-            , Html.select [ id "select-rival", style comboStyles, Shared.onSelect RivalChanged ] <|
+            , Html.select [ id "select-rival", style comboStyles, Shared.onSelect (MTeamSelection << RivalChanged) ] <|
                 List.map
                     (\user ->
                         Html.option
@@ -445,7 +459,7 @@ teamSelectionView model state =
                 attributes =
                     case ( state.ownTeam, state.rivalTeam ) of
                         ( Just ot, Just rt ) ->
-                            [ Button.onClick (TeamSelectionDone ot rt) ]
+                            [ Button.onClick (MTeamSelection (TeamSelectionDone ot rt)) ]
 
                         _ ->
                             [ Button.disabled ]
@@ -455,13 +469,13 @@ teamSelectionView model state =
         ]
 
 
-fullTeamSelectionView : Model -> FullTeamSelectionState -> List (Html Msg)
-fullTeamSelectionView model state =
+expandedSelectionView : Model -> ExpandedSelectionState -> List (Html Msg)
+expandedSelectionView model state =
     let
         onLeagueSelect id =
             case (List.filter (\l -> l.id == id) state.context.leagues |> List.head) of
                 Just l ->
-                    FullSelect <| LeagueChange l
+                    MExpandedSelection <| LeagueChange l
 
                 Nothing ->
                     Debug.crash "invalid option"
@@ -479,7 +493,7 @@ fullTeamSelectionView model state =
         onTeamSelect id =
             case (List.filter (\t -> t.id == id) state.teams |> List.head) of
                 Just l ->
-                    FullSelect <| FullTeamChange l
+                    MExpandedSelection <| TeamChangedExpanded l
 
                 Nothing ->
                     Debug.crash "invalid option"
@@ -511,7 +525,7 @@ fullTeamSelectionView model state =
         , div
             [ style [ ( "text-align", "center" ), ( "margin-top", "40px" ) ]
             ]
-            [ mainActionButton model.mdl mdlIds.teamSelectionDone "Done" [ Button.onClick (FullSelect Done) ] ]
+            [ mainActionButton model.mdl mdlIds.teamSelectionDone "Done" [ Button.onClick (MExpandedSelection Done) ] ]
         ]
 
 
