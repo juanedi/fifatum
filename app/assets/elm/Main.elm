@@ -164,6 +164,7 @@ drawer model =
         , Layout.navigation []
             [ menuLink "#stats" "Stats" StatsRoute
             , menuLink "#ranking" "Ranking" RankingRoute
+            , Html.hr [] []
             , Layout.link [ Layout.href "/logout" ] [ text "Logout" ]
             ]
         ]
