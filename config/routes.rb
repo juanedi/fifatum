@@ -3,6 +3,7 @@ Rails.application.routes.draw do
   root to: "application#index"
 
   get '/login/start' => 'login#start'
+  get '/auth/:provider/callback' => 'login#callback'
   post '/auth/:provider/callback' => 'login#callback'
   get '/logout' => 'login#logout'
 

@@ -1,6 +1,10 @@
 class LoginController < ActionController::Base
   def start
-    redirect_to "/auth/developer"
+    if Rails.env.development?
+      redirect_to "/auth/developer"
+    else
+      redirect_to "/auth/google_oauth2"
+    end
   end
 
   def callback
