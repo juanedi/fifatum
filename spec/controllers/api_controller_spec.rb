@@ -164,6 +164,9 @@ RSpec.describe ApiController do
                }
         }.to change { Match.count }.from(0).to(1)
 
+        expect(response.code).to eq("204")
+        expect(response.body).to be_empty
+
         match = Match.first
 
         expect(match.user1_id).to eq(current_user.id)
@@ -183,6 +186,28 @@ RSpec.describe ApiController do
                rival_team_id: t2.id
              }
 
+        expect(response.code).to eq("400")
+        expect(Match.count).to eq(0)
+      end
+
+      it "fails if a negative amount of goals is reported" do
+        post :report_match, params: {
+               rival_id: other_user.id,
+               own_goals: -1,
+               rival_goals: 2,
+               own_team_id: t1.id,
+               rival_team_id: t2.id
+             }
+        expect(response.code).to eq("400")
+        expect(Match.count).to eq(0)
+
+        post :report_match, params: {
+                rival_id: other_user.id,
+                own_goals: 1,
+                rival_goals: -2,
+                own_team_id: t1.id,
+                rival_team_id: t2.id
+              }
         expect(response.code).to eq("400")
         expect(Match.count).to eq(0)
       end

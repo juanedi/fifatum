@@ -3,6 +3,7 @@ module Routing
         ( Route(..)
         , parser
         , navigate
+        , navigateToRoot
         )
 
 import Navigation
@@ -37,6 +38,11 @@ locationParser location =
             |> String.dropLeft 1
             |> parse identity matchers
             |> Result.withDefault NotFoundRoute
+
+
+navigateToRoot : Cmd msg
+navigateToRoot =
+    Navigation.newUrl <| "/"
 
 
 navigate : Route -> Cmd msg

@@ -1,7 +1,9 @@
 module Util exposing (..)
 
 import Date exposing (Date)
+import Return
 import String
+import Task
 
 
 dateString : Date -> String
@@ -52,3 +54,18 @@ monthNumber month =
 
         Date.Dec ->
             12
+
+
+unreachable : a -> b
+unreachable =
+    (\_ -> Debug.crash "This failure cannot happen.")
+
+
+performMessage : msg -> Cmd msg
+performMessage msg =
+    Task.perform unreachable identity (Task.succeed msg)
+
+
+perform : msg -> ( model, Cmd msg ) -> ( model, Cmd msg )
+perform msg =
+    Return.command (performMessage msg)

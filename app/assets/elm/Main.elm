@@ -121,9 +121,15 @@ update msg model =
                             |> Return.mapCmd StatsMsg
 
                     ( NewMatchModel pModel, NewMatchMsg pMsg ) ->
-                        NewMatch.update pMsg pModel
-                            |> Return.map (setPageModel NewMatchModel)
-                            |> Return.mapCmd NewMatchMsg
+                        case pMsg of
+                            NewMatch.Event (NewMatch.MatchReportOk) ->
+                                Return.singleton model
+                                    |> Return.command (Routing.navigateToRoot)
+
+                            _ ->
+                                NewMatch.update pMsg pModel
+                                    |> Return.map (setPageModel NewMatchModel)
+                                    |> Return.mapCmd NewMatchMsg
 
                     _ ->
                         Return.singleton model

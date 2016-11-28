@@ -42,7 +42,7 @@ class ApiController < ApplicationController
   def report_match
     params.required([:rival_id, :own_goals, :rival_goals, :own_team_id, :rival_team_id])
 
-    if params[:rival_id].to_i == @current_user.id
+    if params[:rival_id].to_i == @current_user.id || params[:own_goals].to_i < 0 || params[:rival_goals].to_i < 0
       return head 400
     end
 
@@ -55,6 +55,8 @@ class ApiController < ApplicationController
       user2_team_id: params[:rival_team_id],
       user2_goals: params[:rival_goals]
     )
+
+    return head 204
   end
 
   private

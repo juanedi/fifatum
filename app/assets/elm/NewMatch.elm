@@ -1,7 +1,8 @@
 module NewMatch
     exposing
         ( Model
-        , Msg
+        , Msg(Event)
+        , NewMatchEvent(..)
         , init
         , update
         , view
@@ -14,8 +15,10 @@ import Html.Attributes exposing (for, id, style, value, selected)
 import Material
 import Material.Button as Button
 import Material.Options as Options
+import Material.Grid exposing (grid, cell, size, Device(..))
 import Return exposing (return, singleton, command)
 import Shared
+import Util
 
 
 type State
@@ -23,13 +26,7 @@ type State
     | NoData String
     | TeamSelection TeamSelectionState
     | ExpandedSelection ExpandedSelectionState
-    | Scoring
-        { rival : User
-        , ownTeam : Team
-        , rivalTeam : Team
-        , ownScore : Int
-        , rivalScore : Int
-        }
+    | Scoring ScoringState
 
 
 type alias LoadingState =
@@ -59,6 +56,15 @@ type alias ExpandedSelectionState =
     }
 
 
+type alias ScoringState =
+    { rival : User
+    , ownTeam : Team
+    , rivalTeam : Team
+    , ownScore : Int
+    , rivalScore : Int
+    }
+
+
 type alias Model =
     { mdl : Material.Model
     , user : User
@@ -67,11 +73,17 @@ type alias Model =
 
 
 type Msg
-    = Mdl (Material.Msg Msg)
+    = Event NewMatchEvent
+    | Mdl (Material.Msg Msg)
     | FetchFailed
     | MLoading LoadingMsg
     | MTeamSelection TeamSelectMsg
     | MExpandedSelection ExpandedSelectionMsg
+    | MScoring ScoringMsg
+
+
+type NewMatchEvent
+    = MatchReportOk
 
 
 type LoadingMsg
@@ -95,6 +107,14 @@ type ExpandedSelectionMsg
     | Done
 
 
+type ScoringMsg
+    = Goal TeamTarget
+    | Reset
+    | Report
+    | ReportFailed
+    | ReportOk
+
+
 type TeamTarget
     = Own
     | Rival
@@ -115,6 +135,9 @@ init user =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        Event _ ->
+            singleton model
+
         Mdl msg ->
             Material.update msg model
 
@@ -136,9 +159,40 @@ update msg model =
                 ( ExpandedSelection state, MExpandedSelection msg ) ->
                     updateExpandedSelection model state msg
 
-                ( Scoring _, _ ) ->
-                    -- TODO
-                    singleton model
+                ( Scoring state, MScoring msg ) ->
+                    case msg of
+                        Goal target ->
+                            let
+                                updatedState =
+                                    case target of
+                                        Own ->
+                                            { state | ownScore = state.ownScore + 1 }
+
+                                        Rival ->
+                                            { state | rivalScore = state.rivalScore + 1 }
+                            in
+                                singleton { model | state = Scoring updatedState }
+
+                        Reset ->
+                            singleton { model | state = Scoring { state | ownScore = 0, rivalScore = 0 } }
+
+                        Report ->
+                            let
+                                report =
+                                    ( { user = model.user, team = state.ownTeam, goals = state.ownScore }
+                                    , { user = state.rival, team = state.rivalTeam, goals = state.rivalScore }
+                                    )
+                            in
+                                singleton model
+                                    |> command (Api.reportMatch (always (MScoring ReportFailed)) (MScoring ReportOk) report)
+
+                        ReportOk ->
+                            singleton model
+                                |> Util.perform (Event MatchReportOk)
+
+                        ReportFailed ->
+                            -- TODO
+                            singleton model
 
                 _ ->
                     Debug.crash "invalid state"
@@ -365,21 +419,7 @@ view model =
 
             Scoring state ->
                 column <|
-                    [ div [ style [ ( "flex-grow", "1" ) ] ]
-                        [ Html.h4 [] [ text "TODO :)" ]
-                        , fieldLabel "f1" "Your Team"
-                        , text state.ownTeam.name
-                        , Html.hr [] []
-                        , fieldLabel "f2" "Rival"
-                        , text state.rival.name
-                        , Html.hr [] []
-                        , fieldLabel "f3" "Rival's team"
-                        , text state.rivalTeam.name
-                        , Html.hr [] []
-                        , fieldLabel "f4" "Score"
-                        , text (toString state.ownScore ++ " - " ++ toString state.rivalScore)
-                        ]
-                    ]
+                    scoringView model state
 
 
 teamSelectionView : Model -> TeamSelectionState -> List (Html Msg)
@@ -529,6 +569,95 @@ expandedSelectionView model state =
         ]
 
 
+scoringView : Model -> ScoringState -> List (Html Msg)
+scoringView model state =
+    let
+        teamDisplay target =
+            let
+                halfWidth =
+                    [ size Tablet 3, size Desktop 6, size Phone 2 ]
+
+                verticalCenter =
+                    [ ( "position", "relative" )
+                    , ( "top", "50%" )
+                    , ( "transform", "translateY(-50%)" )
+                    ]
+
+                halfWidthColumn content =
+                    cell halfWidth
+                        [ div
+                            [ style [ ( "height", "100%" ) ] ]
+                            [ div [ style verticalCenter ]
+                                content
+                            ]
+                        ]
+
+                ( name, teamName, score, goalButtonId ) =
+                    case target of
+                        Own ->
+                            ( "You", state.ownTeam.name, state.ownScore, mdlIds.ownTeamGoal )
+
+                        Rival ->
+                            ( state.rival.name, state.rivalTeam.name, state.rivalScore, mdlIds.rivalTeamGoal )
+
+                goalButton =
+                    Button.render Mdl
+                        [ goalButtonId ]
+                        model.mdl
+                        [ Button.onClick (MScoring <| Goal target)
+                        , Button.raised
+                        , Options.css "margin-top" "10px"
+                        , Options.css "width" "100%"
+                        ]
+                        [ text "GOAL" ]
+            in
+                grid []
+                    [ halfWidthColumn
+                        [ Html.p [ style [ ( "font-size", "15px" ) ] ] [ text name ]
+                        , Html.p [ style [ ( "font-size", "17px" ) ] ] [ text teamName ]
+                        ]
+                    , halfWidthColumn
+                        [ Html.p [ style [ ( "font-size", "50px" ), ( "text-align", "center" ) ] ] [ text (toString score) ]
+                        , goalButton
+                        ]
+                    ]
+
+        resetButton =
+            Button.render Mdl
+                [ mdlIds.reportMatch ]
+                model.mdl
+                [ Button.onClick (MScoring Reset)
+                , Button.colored
+                , Button.raised
+                , Options.css "width" "45%"
+                , Options.css "margin-right" "15px"
+                ]
+                [ text "Reset" ]
+
+        reportButton =
+            Button.render Mdl
+                [ mdlIds.reportMatch ]
+                model.mdl
+                [ Button.onClick (MScoring Report)
+                , Button.colored
+                , Button.raised
+                , Options.css "width" "45%"
+                ]
+                [ text "Report" ]
+    in
+        [ div [ style [ ( "flex-grow", "1" ) ] ]
+            [ teamDisplay Own ]
+        , div [ style [ ( "flex-grow", "1" ) ] ]
+            [ teamDisplay Rival ]
+        , div
+            [ style [ ( "text-align", "center" ), ( "margin-top", "40px" ) ]
+            ]
+            [ resetButton
+            , reportButton
+            ]
+        ]
+
+
 mainActionButton mdl mdlId t attrs =
     Button.render Mdl
         [ mdlId ]
@@ -568,4 +697,7 @@ mdlIds =
     , teamSelection1 = 2
     , teamSelection2 = 3
     , expandedSelectionDone = 4
+    , ownTeamGoal = 5
+    , rivalTeamGoal = 6
+    , reportMatch = 7
     }

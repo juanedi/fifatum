@@ -13,11 +13,13 @@ module Api
         , Team
         , fetchRecentTeams
         , fetchTeams
+        , reportMatch
         )
 
 import Date exposing (Date)
 import Http
 import Json.Decode as Decode exposing ((:=), list, int, float, string)
+import Json.Encode as Encode
 import Task
 
 
@@ -43,6 +45,14 @@ type alias Match =
     , user1 : Participation
     , user2 : Participation
     }
+
+
+type alias MatchReport =
+    ( ParticipationReport, ParticipationReport )
+
+
+type alias ParticipationReport =
+    { user : User, team : Team, goals : Int }
 
 
 type alias Participation =
@@ -117,6 +127,38 @@ fetchTeams errorTagger okTagger league =
     in
         Http.get decoder url
             |> Task.perform errorTagger okTagger
+
+
+reportMatch : (Http.RawError -> msg) -> msg -> MatchReport -> Cmd msg
+reportMatch errorTagger okTagger matchReport =
+    let
+        body =
+            encodeReport matchReport
+                |> Encode.encode 0
+                |> Http.string
+
+        request =
+            { verb = "POST"
+            , headers = [ ( "Content-Type", "application/json" ) ]
+            , url = "/api/matches"
+            , body = body
+            }
+
+        task =
+            Http.send Http.defaultSettings request
+    in
+        Task.perform errorTagger (always okTagger) task
+
+
+encodeReport : MatchReport -> Encode.Value
+encodeReport ( p1, p2 ) =
+    Encode.object
+        [ ( "own_goals", Encode.int p1.goals )
+        , ( "own_team_id", Encode.int p1.team.id )
+        , ( "rival_id", Encode.int p2.user.id )
+        , ( "rival_goals", Encode.int p2.goals )
+        , ( "rival_team_id", Encode.int p2.team.id )
+        ]
 
 
 userDecoder : Decode.Decoder User
