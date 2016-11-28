@@ -6,16 +6,16 @@ default: &default
 docker_local: &docker_local
   <<: *default
   host: localhost
-  user: fifa-stats
-  password: fifa-stats
+  user: fifatum
+  password: fifatum
 
 development:
   <<: *docker_local
-  database: fifa-stats
+  database: fifatum
 
 # Warning: The database defined as "test" will be erased and
 # re-generated from your development database when you run "rake".
 # Do not set this db to the same as development or production.
 test:
   <<: *docker_local
-  database: fifa-stats_test
+  database: fifatum_test

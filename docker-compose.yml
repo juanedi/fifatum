@@ -3,9 +3,9 @@ services:
   postgres:
     image: postgres:9.5
     environment:
-      POSTGRES_PASSWORD: fifa-stats
-      POSTGRES_USER: fifa-stats
-      POSTGRES_DB: fifa-stats
+      POSTGRES_PASSWORD: fifatum
+      POSTGRES_USER: fifatum
+      POSTGRES_DB: fifatum
     ports:
       - "5432:5432"
     volumes:
