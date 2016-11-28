@@ -1,24 +1,43 @@
-# README
+# Fifatum
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+## Development environment setup
 
-Things you may want to cover:
+### Elm
 
-* Ruby version
+The client application is programmed in [Elm](http://elm-lang.org/) v.17.1. To install the compiler simply run:
 
-* System dependencies
+```
+$ npm install elm@0.17.1
+```
 
-* Configuration
+### Rails
 
-* Database creation
+The app uses Ruby 2.3.1. To install Rails and other Ruby dependencies using Bundler, run:
 
-* Database initialization
+```
+$ gem install bundler
+$ bundle install --path=.bundle
+```
 
-* How to run the test suite
+### Database
 
-* Services (job queues, cache servers, search engines, etc.)
+By default, the application tried to connect to a postgres server at localhost:5000. The database can be created using [Docker compose](https://docs.docker.com/compose/) as follows:
 
-* Deployment instructions
+```
+$ docker-compose up -d
+```
 
-* ...
+After that, run migrations and import FIFA17 teams with the following commands:
+
+```
+$ bundle exec rake db:setup
+$ bin/import_teams
+```
+
+### Testing
+
+To run de test suite simply run
+
+```
+$ bundle exec rspec
+```
