@@ -11,7 +11,7 @@ module NewMatch
 import Api exposing (User, League, Team)
 import Html
 import Html exposing (Html, div, text, label, select)
-import Html.Attributes exposing (for, id, style, value, selected)
+import Html.Attributes exposing (for, id, style, value, selected, disabled)
 import Material
 import Material.Button as Button
 import Material.Options as Options
@@ -52,7 +52,7 @@ type alias ExpandedSelectionState =
     { target : TeamTarget
     , context : TeamSelectionState
     , league : League
-    , teams : List Team
+    , teams : Maybe (List Team)
     , selection : Maybe Team
     }
 
@@ -295,7 +295,7 @@ updateExpandedSelection model state msg =
     in
         case msg of
             LeagueChange league ->
-                setState { state | league = league, selection = Nothing }
+                setState { state | league = league, teams = Nothing, selection = Nothing }
                     |> command (Api.fetchTeams (always FetchFailed) (MExpandedSelection << FetchedTeams) league)
 
             TeamChangedExpanded team ->
@@ -306,7 +306,7 @@ updateExpandedSelection model state msg =
                     sorted =
                         List.sortBy .name teams
                 in
-                    setState { state | teams = sorted, selection = List.head sorted }
+                    setState { state | teams = Just sorted, selection = List.head sorted }
 
             Done ->
                 let
@@ -361,7 +361,7 @@ initExpandedSelection model state target =
                             { target = target
                             , context = state
                             , league = l
-                            , teams = []
+                            , teams = Nothing
                             , selection = Nothing
                             }
                 }
@@ -542,15 +542,28 @@ expandedSelectionView model state =
                     state.context.leagues
 
         onTeamSelect id =
-            case (List.filter (\t -> t.id == id) state.teams |> List.head) of
-                Just l ->
-                    MExpandedSelection <| TeamChangedExpanded l
+            let
+                selection =
+                    state.teams
+                        |> Maybe.withDefault []
+                        |> List.filter (\t -> t.id == id)
+                        |> List.head
+            in
+                case selection of
+                    Just l ->
+                        MExpandedSelection <| TeamChangedExpanded l
 
-                Nothing ->
-                    Debug.crash "invalid option"
+                    Nothing ->
+                        Debug.crash "invalid option"
 
         teamSelect =
-            Html.select [ id "select-team", style comboStyles, Shared.onSelect onTeamSelect ] <|
+            Html.select
+                [ id "select-team"
+                , disabled (state.teams == Nothing)
+                , style comboStyles
+                , Shared.onSelect onTeamSelect
+                ]
+            <|
                 List.map
                     (\team ->
                         Html.option
@@ -563,7 +576,7 @@ expandedSelectionView model state =
                             ]
                             [ text team.name ]
                     )
-                    state.teams
+                    (Maybe.withDefault [] state.teams)
     in
         [ div [ style [ ( "flex-grow", "1" ) ] ]
             [ fieldLabel "select-league" "Leage"
