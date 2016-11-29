@@ -415,7 +415,7 @@ view model =
                 Shared.loading
 
             NoData msg ->
-                text msg
+                Shared.noData msg
 
             TeamSelection state ->
                 column <|

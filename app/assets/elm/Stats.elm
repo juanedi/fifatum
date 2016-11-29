@@ -114,7 +114,10 @@ view model =
                 Shared.loading
 
             Loaded stats ->
-                recentMatchesView model.user stats.recentMatches
+                if List.isEmpty stats.recentMatches then
+                    Shared.noData "You haven't played any matches yet"
+                else
+                    recentMatchesView model.user stats.recentMatches
 
 
 recentMatchesView : User -> List Api.Match -> Html Msg

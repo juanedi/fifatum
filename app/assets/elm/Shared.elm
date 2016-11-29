@@ -3,6 +3,7 @@ module Shared
         ( loading
         , titleHeader
         , onSelect
+        , noData
         )
 
 import Html exposing (Html, div, text)
@@ -53,3 +54,9 @@ onSelect msg =
                 |> Json.Decode.map msg
     in
         Events.on "change" decoder
+
+
+noData : String -> Html msg
+noData m =
+    div [ Html.Attributes.class "no-data" ]
+        [ text m ]
