@@ -27,6 +27,7 @@ type State
     | TeamSelection TeamSelectionState
     | ExpandedSelection ExpandedSelectionState
     | Scoring ScoringState
+    | Submitted
 
 
 type alias LoadingState =
@@ -80,6 +81,7 @@ type Msg
     | MTeamSelection TeamSelectMsg
     | MExpandedSelection ExpandedSelectionMsg
     | MScoring ScoringMsg
+    | MSubmitted SubmittedMsg
 
 
 type NewMatchEvent
@@ -111,7 +113,10 @@ type ScoringMsg
     = Goal TeamTarget
     | Reset
     | Report
-    | ReportFailed
+
+
+type SubmittedMsg
+    = ReportFailed
     | ReportOk
 
 
@@ -183,9 +188,11 @@ update msg model =
                                     , { user = state.rival, team = state.rivalTeam, goals = state.rivalScore }
                                     )
                             in
-                                singleton model
-                                    |> command (Api.reportMatch (always (MScoring ReportFailed)) (MScoring ReportOk) report)
+                                singleton { model | state = Submitted }
+                                    |> command (Api.reportMatch (always (MSubmitted ReportFailed)) (MSubmitted ReportOk) report)
 
+                ( Submitted, MSubmitted msg ) ->
+                    case msg of
                         ReportOk ->
                             singleton model
                                 |> Util.perform (Event MatchReportOk)
@@ -421,6 +428,9 @@ view model =
             Scoring state ->
                 column <|
                     scoringView model state
+
+            Submitted ->
+                Shared.loading
 
 
 teamSelectionView : Model -> TeamSelectionState -> List (Html Msg)
