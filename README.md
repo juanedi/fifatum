@@ -21,7 +21,7 @@ $ bundle install --path=.bundle
 
 ### Database
 
-By default, the application tried to connect to a postgres server at localhost:5000. The database can be created using [Docker compose](https://docs.docker.com/compose/) as follows:
+By default, the application tries to connect to a postgres server at localhost:5432. The database can be created using [Docker compose](https://docs.docker.com/compose/) as follows:
 
 ```
 $ docker-compose up -d
@@ -31,6 +31,12 @@ After that, run migrations and import FIFA17 teams with the following commands:
 
 ```
 $ bundle exec rake db:setup
+```
+
+To download and import FIFA17 teams:
+
+```
+$ bin/scraper
 $ bin/import_teams
 ```
 
