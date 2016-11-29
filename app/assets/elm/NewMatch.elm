@@ -579,7 +579,7 @@ expandedSelectionView model state =
                     (Maybe.withDefault [] state.teams)
     in
         [ div [ style [ ( "flex-grow", "1" ) ] ]
-            [ fieldLabel "select-league" "Leage"
+            [ fieldLabel "select-league" "League"
             , leagueSelect
             ]
         , div [ style [ ( "flex-grow", "1" ) ] ]
