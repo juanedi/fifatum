@@ -122,7 +122,7 @@ recentMatchesView user recentMatches =
     div
         []
         [ Html.h4 [] [ text "Last matches" ]
-        , Table.table [ Options.css "width" "100%" ]
+        , Table.table [ Options.id "stats-table" ]
             [ Table.thead []
                 [ Table.tr []
                     [ Table.th [] [ text "Date" ]

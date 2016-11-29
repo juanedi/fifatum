@@ -397,8 +397,9 @@ view model =
                 [ style
                     [ ( "display", "flex" )
                     , ( "flex-direction", "column" )
-                    , ( "padding-top", "40px" )
+                    , ( "padding-top", "70px" )
                     , ( "min-height", "400px" )
+                    , ( "height", "70vh" )
                     ]
                 ]
     in

@@ -20,3 +20,19 @@
   right: 20px;
   bottom: 20px;
 }
+
+
+table#stats-table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+table#stats-table td {
+  padding: 18px 8px;
+  overflow-x: hidden;
+  word-wrap: break-word;
+}
+
+table#stats-table td:first-of-type {
+  padding-left: 15px;
+}
