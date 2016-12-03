@@ -7,6 +7,7 @@ module Api
         , Ranking
         , fetchRanking
         , Stats
+        , RivalStat
         , fetchStats
         , League
         , fetchLeagues
@@ -17,9 +18,11 @@ module Api
         )
 
 import Date exposing (Date)
+import Dict exposing (Dict)
 import Http
-import Json.Decode as Decode exposing ((:=), list, int, float, string)
+import Json.Decode as Decode exposing ((:=), list, dict, int, float, string)
 import Json.Encode as Encode
+import String
 import Task
 
 
@@ -76,7 +79,19 @@ type alias Team =
 
 
 type alias Stats =
-    { recentMatches : List Match }
+    { recentMatches : List Match
+    , versus : List RivalStat
+    }
+
+
+type alias RivalStat =
+    { rivalName : String
+    , won : Int
+    , tied : Int
+    , lost : Int
+    , goalsMade : Int
+    , goalsReceived : Int
+    }
 
 
 fetchUsers : (Http.Error -> msg) -> (List User -> msg) -> Cmd msg
@@ -177,8 +192,19 @@ rankingEntryDecoder =
 
 statsDecoder : Decode.Decoder Stats
 statsDecoder =
-    Decode.object1 Stats
+    Decode.object2 Stats
         ("recentMatches" := (list matchDecoder))
+        ("versus"
+            := list
+                (Decode.object6 RivalStat
+                    ("rivalName" := string)
+                    ("won" := int)
+                    ("tied" := int)
+                    ("lost" := int)
+                    ("goalsMade" := int)
+                    ("goalsReceived" := int)
+                )
+        )
 
 
 matchDecoder : Decode.Decoder Match

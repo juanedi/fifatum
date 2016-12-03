@@ -5,6 +5,7 @@ RSpec.describe ApiController do
   before(:each) do
     User.create(name: "John", email: "john@example.com")
     User.create(name: "Mike", email: "mike@example.com")
+    User.create(name: "Peter", email: "peter@example.com")
 
     league = League.create(name: "The League")
 
@@ -14,6 +15,7 @@ RSpec.describe ApiController do
 
   let(:current_user) { User.find_by_email("john@example.com") }
   let(:other_user)   { User.find_by_email("mike@example.com") }
+  let(:yet_another_user)   { User.find_by_email("peter@example.com") }
   let(:league)   { League.first }
   let(:t1)       { Team.first }
   let(:t2)       { Team.last }
@@ -47,31 +49,31 @@ RSpec.describe ApiController do
     end
 
     describe "stats" do
-      it "returns all relevant match information" do
-        match = Match.create(
-          user1_id: current_user.id, user1_team_id: t1.id, user1_goals: 3,
-          user2_id: other_user.id, user2_team_id: t2.id, user2_goals: 1
-        )
-
-        expect(match.api_json).to eq({
-          "id" => match.id,
-          "date" => match.created_at.to_i,
-          "user1" => {
-            "id" => current_user.id,
-            "name" => current_user.name,
-            "team" => { "id" => t1.id, "name" => t1.name },
-            "goals" => 3
-          },
-          "user2" => {
-            "id" => other_user.id,
-            "name" => other_user.name,
-            "team" => { "id" => t2.id, "name" => t2.name },
-            "goals" => 1
-          }
-        })
-      end
-
       describe "recent matches" do
+        it "returns all relevant match information" do
+          match = Match.create(
+            user1_id: current_user.id, user1_team_id: t1.id, user1_goals: 3,
+            user2_id: other_user.id, user2_team_id: t2.id, user2_goals: 1
+          )
+
+          expect(match.api_json).to eq({
+                                         "id" => match.id,
+                                         "date" => match.created_at.to_i,
+                                         "user1" => {
+                                           "id" => current_user.id,
+                                           "name" => current_user.name,
+                                           "team" => { "id" => t1.id, "name" => t1.name },
+                                           "goals" => 3
+                                         },
+                                         "user2" => {
+                                           "id" => other_user.id,
+                                           "name" => other_user.name,
+                                           "team" => { "id" => t2.id, "name" => t2.name },
+                                           "goals" => 1
+                                         }
+                                       })
+        end
+
         it "lists the current user's matches" do
           get :stats
 
@@ -111,6 +113,46 @@ RSpec.describe ApiController do
           expect(ids).to eq(Match.order(created_at: :desc).limit(10).map(&:id))
         end
       end
+
+      describe "versus" do
+        it "foo" do
+          Match.create!(
+            user1_id: current_user.id, user1_team_id: t1.id, user1_goals: 3,
+            user2_id: other_user.id, user2_team_id: t2.id, user2_goals: 1
+          )
+
+          Match.create!(
+            user1_id: yet_another_user.id, user1_team_id: t1.id, user1_goals: 2,
+            user2_id: current_user.id, user2_team_id: t2.id, user2_goals: 0
+          )
+
+          Match.create!(
+            user1_id: current_user.id, user1_team_id: t1.id, user1_goals: 1,
+            user2_id: other_user.id, user2_team_id: t2.id, user2_goals: 1
+          )
+
+          get :stats
+
+          expect(json_response["versus"]).to eq([
+                                                  {
+                                                    "rivalName" => other_user.name,
+                                                    "won" => 1,
+                                                    "tied" => 1,
+                                                    "lost" => 0,
+                                                    "goalsMade" => 4,
+                                                    "goalsReceived" => 2,
+                                                  },
+                                                  {
+                                                    "rivalName" => yet_another_user.name,
+                                                    "won" => 0,
+                                                    "tied" => 0,
+                                                    "lost" => 1,
+                                                    "goalsMade" => 0,
+                                                    "goalsReceived" => 2,
+                                                  },
+                                                ])
+        end
+      end
     end
 
     describe "users" do
@@ -125,7 +167,7 @@ RSpec.describe ApiController do
 
       it "returns all users" do
         get :users
-        expect(json_response).to eq([current_user.api_json, other_user.api_json])
+        expect(json_response).to eq([current_user.api_json, other_user.api_json, yet_another_user.api_json])
       end
     end
 

@@ -1,10 +1,22 @@
+.secondary-menu {
+  box-sizing:border-box;
+  width:100%;
+  padding:16px;
+  height:64px;
+
+  div {
+    box-sizing: border-box;
+    position: absolute;
+    right: 16px;
+  }
+}
+
 .corner-btn {
   position: fixed;
   right: 20px;
   bottom: 20px;
   background: rgb(100,100,100) !important;
 }
-
 
 .no-data {
   font-size: 20px;

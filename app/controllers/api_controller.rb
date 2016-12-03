@@ -22,12 +22,15 @@ class ApiController < ApplicationController
 
   def stats
     matches = Match.of_user(@current_user)
-                   .order(created_at: :desc)
-                   .limit(10)
 
     render json: {
-      "recentMatches" => matches.map(&:api_json)
-    }
+             "recentMatches" => matches
+                               .order(created_at: :desc)
+                               .limit(10)
+                               .map(&:api_json),
+
+             "versus" => versus_stats(matches)
+           }
   end
 
   def leagues
@@ -68,6 +71,44 @@ class ApiController < ApplicationController
     end
 
     set_current_user
+  end
+
+  def versus_stats(matches)
+    matches.map { |m| m.participations_for(@current_user) }
+      .group_by { |match| match["rival"]["id"] }
+      .map do |rival_id, rival_matches|
+      won = 0
+      tied = 0
+      lost = 0
+      goals_made = 0
+      goals_received = 0
+
+      rival_matches.each do |match|
+        own_goals = match["own"]["goals"]
+        rival_goals = match["rival"]["goals"]
+
+        case own_goals <=> rival_goals
+        when 1
+          won += 1
+        when -1
+          lost += 1
+        else
+          tied += 1
+        end
+
+        goals_made += own_goals
+        goals_received += rival_goals
+      end
+
+      {
+        "rivalName" => rival_matches.first["rival"]["name"],
+        "won" => won,
+        "tied" => tied,
+        "lost" => lost,
+        "goalsMade" => goals_made,
+        "goalsReceived" => goals_received
+      }
+    end
   end
 
 end

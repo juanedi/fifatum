@@ -31,4 +31,25 @@ class Match < ActiveRecord::Base
     }
   end
 
+  def participations_for(user)
+    p1 = {
+      "id" => user1.id,
+      "name" => user1.name,
+      "team" => { "id" => team1.id, "name" => team1.name },
+      "goals" => user1_goals
+    }
+    p2 = {
+      "id" => user2.id,
+      "name" => user2.name,
+      "team" => { "id" => team2.id, "name" => team2.name },
+      "goals" => user2_goals
+    }
+
+    if user1 == user
+      { "own" => p1, "rival" => p2 }
+    else
+      { "own" => p2, "rival" => p1 }
+    end
+  end
+
 end

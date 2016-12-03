@@ -1,15 +1,12 @@
 #stats {
   table#stats-table {
+    margin-top: 35px;
     width: 100%;
     table-layout: fixed;
 
     td {
-      &:first-of-type {
-        padding-left: 15px;
-      }
-
-      padding: 18px 8px;
       overflow-x: hidden;
+      white-space: normal;
       word-wrap: break-word;
     }
 

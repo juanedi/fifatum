@@ -16,7 +16,7 @@ import Material
 import Material.Button as Button
 import Material.Layout as Layout
 import Material.Menu as Menu
-import Material.Options as Options exposing (css)
+import Material.Options as Options exposing (cs, css)
 import Material.Table as Table
 import Return
 import SelectList exposing (include, maybe)
@@ -28,6 +28,7 @@ import Util exposing (dateString)
 type State
     = Loading
     | RecentMatches { stats : Api.Stats, openDetail : Maybe Api.Match }
+    | Versus { stats : Api.Stats, openDetail : Maybe Api.RivalStat }
 
 
 type alias Model =
@@ -41,8 +42,20 @@ type Msg
     = Mdl (Material.Msg Msg)
     | FetchOk Api.Stats
     | FetchFailed
-    | OpenMatchDetail Api.Match
+    | MRecentMatches RecentMatchesMsg
+    | GoToVersus
+    | GoToRecentMatches
+    | MVersus VersusMsg
+
+
+type RecentMatchesMsg
+    = OpenMatchDetail Api.Match
     | CloseMatchDetail
+
+
+type VersusMsg
+    = OpenRivalDetail Api.RivalStat
+    | CloseRivalDetail
 
 
 init : User -> ( Model, Cmd Msg )
@@ -62,25 +75,70 @@ update msg model =
             Material.update msg model
 
         ( Loading, FetchOk stats ) ->
-            Return.singleton
-                { model | state = RecentMatches { stats = stats, openDetail = Nothing } }
+            Return.singleton <|
+                initRecentMatches model stats
 
         ( Loading, FetchFailed ) ->
             Return.singleton model
 
-        ( RecentMatches state, OpenMatchDetail match ) ->
-            Return.singleton { model | state = RecentMatches { state | openDetail = Just match } }
+        ( RecentMatches state, GoToVersus ) ->
+            Return.singleton <|
+                initVersus model state.stats
 
-        ( RecentMatches state, CloseMatchDetail ) ->
-            Return.singleton { model | state = RecentMatches { state | openDetail = Nothing } }
+        ( RecentMatches state, MRecentMatches msg ) ->
+            case msg of
+                OpenMatchDetail match ->
+                    Return.singleton { model | state = RecentMatches { state | openDetail = Just match } }
+
+                CloseMatchDetail ->
+                    Return.singleton { model | state = RecentMatches { state | openDetail = Nothing } }
+
+        ( Versus state, GoToRecentMatches ) ->
+            Return.singleton <|
+                initRecentMatches model state.stats
+
+        ( Versus state, MVersus msg ) ->
+            case msg of
+                OpenRivalDetail stat ->
+                    Return.singleton { model | state = Versus { state | openDetail = Just stat } }
+
+                CloseRivalDetail ->
+                    Return.singleton { model | state = Versus { state | openDetail = Nothing } }
 
         _ ->
             Debug.crash "Invalid state"
 
 
+initRecentMatches : Model -> Api.Stats -> Model
+initRecentMatches model stats =
+    { model | state = RecentMatches { stats = stats, openDetail = Nothing } }
+
+
+initVersus : Model -> Api.Stats -> Model
+initVersus model stats =
+    { model | state = Versus { stats = stats, openDetail = Nothing } }
+
+
 header : Model -> List (Html Msg)
 header model =
     let
+        items =
+            case model.state of
+                Loading ->
+                    []
+
+                RecentMatches _ ->
+                    [ Menu.item
+                        [ Menu.onSelect GoToVersus ]
+                        [ text "Versus" ]
+                    ]
+
+                Versus _ ->
+                    [ Menu.item
+                        [ Menu.onSelect GoToRecentMatches ]
+                        [ text "Recent matches" ]
+                    ]
+
         menu =
             Menu.render Mdl
                 [ mdlIds.menu ]
@@ -90,29 +148,13 @@ header model =
                 , css "position" "absolute"
                 , css "right" "16px"
                 ]
-                [ Menu.item
-                    [ Menu.disabled ]
-                    [ text "Versus" ]
-                , Menu.item
-                    [ Menu.disabled ]
-                    [ text "Awards" ]
-                ]
+                items
     in
         [ Layout.row []
             [ Layout.title [] [ text "Stats" ]
             , Options.div
-                [ css "box-sizing" "border-box"
-                , css "width" "100%"
-                , css "padding" "16px"
-                , css "height" "64px"
-                ]
-                [ Options.div
-                    [ css "box-sizing" "border-box"
-                    , css "position" "absolute"
-                    , css "right" "16px"
-                    ]
-                    [ menu ]
-                ]
+                [ cs "secondary-menu" ]
+                [ Options.div [] [ menu ] ]
             ]
         ]
 
@@ -133,20 +175,23 @@ view model =
                 else
                     recentMatchesView model.mdl model.user stats.recentMatches openDetail
 
+            Versus { stats, openDetail } ->
+                if List.isEmpty stats.recentMatches then
+                    -- TODO
+                    Shared.noData "You haven't played any matches yet"
+                else
+                    versusView model.mdl model.user stats.versus openDetail
+
 
 recentMatchesView : Material.Model -> User -> List Api.Match -> Maybe Api.Match -> Html Msg
 recentMatchesView mdl user recentMatches openDetail =
     let
-        matchCell match content =
-            Table.td []
-                [ div
-                    [ Html.Events.onClick (OpenMatchDetail match) ]
-                    content
-                ]
+        matchCell match options content =
+            clickableCell (MRecentMatches <| OpenMatchDetail match) options content
     in
         div [ id "stats" ] <|
             SelectList.select
-                [ include <| Html.h4 [] [ text "Last matches" ]
+                [ include <| Html.h5 [] [ text "Last matches" ]
                 , maybe <|
                     Maybe.map
                         (matchDetailDialog mdl user)
@@ -157,7 +202,7 @@ recentMatchesView mdl user recentMatches openDetail =
                             [ Table.tr []
                                 [ Table.th [] [ text "Date" ]
                                 , Table.th [] [ text "Rival" ]
-                                , Table.th [] [ text "Result" ]
+                                , Table.th [ Table.numeric ] [ text "Result" ]
                                 ]
                             ]
                         , Table.tbody []
@@ -166,14 +211,66 @@ recentMatchesView mdl user recentMatches openDetail =
                                     (\index match ->
                                         Table.tr
                                             []
-                                            [ matchCell match [ text (dateString match.date) ]
-                                            , matchCell match [ text (rivalName user match) ]
-                                            , matchCell match [ text (score user match) ]
+                                            [ matchCell match [] [ text (dateString match.date) ]
+                                            , matchCell match [] [ text (rivalName user match) ]
+                                            , matchCell match [ Table.numeric ] [ text (score user match) ]
                                             ]
                                     )
                             )
                         ]
                 ]
+
+
+versusView : Material.Model -> User -> List Api.RivalStat -> Maybe Api.RivalStat -> Html Msg
+versusView mdl user stats openDetail =
+    let
+        onClick stat =
+            MVersus <| OpenRivalDetail stat
+    in
+        div [ id "stats" ] <|
+            SelectList.select
+                [ include <| Html.h5 [] [ text "Rivals" ]
+                , maybe <|
+                    Maybe.map
+                        (rivalStatDialog mdl)
+                        openDetail
+                , include <|
+                    Table.table [ Options.id "stats-table" ]
+                        [ Table.thead []
+                            [ Table.tr []
+                                [ Table.th [] [ text "Rival" ]
+                                , Table.th [ Table.numeric ] [ text "Balance" ]
+                                ]
+                            ]
+                        , Table.tbody
+                            []
+                            (stats
+                                |> List.indexedMap
+                                    (\index stat ->
+                                        Table.tr []
+                                            [ clickableCell (onClick stat) [] [ text stat.rivalName ]
+                                            , clickableCell (onClick stat) [ Table.numeric ] [ text (balance stat) ]
+                                            ]
+                                    )
+                            )
+                        ]
+                ]
+
+
+clickableCell msg options content =
+    Table.td options
+        [ div
+            [ Html.Events.onClick msg ]
+            content
+        ]
+
+
+balance : Api.RivalStat -> String
+balance stat =
+    if stat.won > stat.lost then
+        "+" ++ toString (stat.won - stat.lost)
+    else
+        toString (stat.won - stat.lost)
 
 
 matchDetailDialog : Material.Model -> User -> Api.Match -> Html Msg
@@ -184,12 +281,36 @@ matchDetailDialog mdl user match =
 
         rival =
             rivalParticipation user match
+    in
+        modalDialog mdl
+            (MRecentMatches CloseMatchDetail)
+            [ ( "Rival", rival.name )
+            , ( "Score", (score user match) )
+            , ( "Your team", own.team.name )
+            , ( "Rival's team", rival.team.name )
+            ]
 
+
+rivalStatDialog : Material.Model -> Api.RivalStat -> Html Msg
+rivalStatDialog mdl stat =
+    modalDialog mdl
+        (MVersus CloseRivalDetail)
+        [ ( "Rival", stat.rivalName )
+        , ( "Balance", balance stat )
+        , ( "Record", (toString stat.won) ++ " victories - " ++ (toString stat.tied) ++ " tied - " ++ (toString stat.lost) ++ " lost" )
+        , ( "Goals made", toString stat.goalsMade )
+        , ( "Goals received", toString stat.goalsReceived )
+        ]
+
+
+modalDialog : Material.Model -> Msg -> List ( String, String ) -> Html Msg
+modalDialog mdl closeMsg fields =
+    let
         modalCloseButton =
             Button.render Mdl
                 [ mdlIds.closeModal ]
                 mdl
-                [ Button.onClick CloseMatchDetail ]
+                [ Button.onClick closeMsg ]
                 [ text "Close" ]
 
         field name value =
@@ -200,12 +321,8 @@ matchDetailDialog mdl user match =
     in
         div [ class "match-detail-dialog-container" ]
             [ div [ class "match-detail-dialog" ]
-                [ div [ class "content" ]
-                    [ field "Rival" rival.name
-                    , field "Score" (score user match)
-                    , field "Your team" own.team.name
-                    , field "Rival's team" rival.team.name
-                    ]
+                [ div [ class "content" ] <|
+                    List.map (uncurry field) fields
                 , div [ class "actions" ]
                     [ modalCloseButton ]
                 ]
