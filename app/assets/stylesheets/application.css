@@ -13,20 +13,3 @@
  *= require_tree .
  *= require_self
  */
-
-
-.corner-btn {
-  position: fixed;
-  right: 20px;
-  bottom: 20px;
-  background: rgb(100,100,100) !important;
-}
-
-
-.no-data {
-  font-size: 20px;
-  color: #8A8A8A;
-  text-align: center;
-  width: 100%;
-  padding-top: 100px;
-}

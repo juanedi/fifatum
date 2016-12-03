@@ -1,55 +1,57 @@
-table#stats-table {
-  width: 100%;
-  table-layout: fixed;
+#stats {
+  table#stats-table {
+    width: 100%;
+    table-layout: fixed;
 
-  td {
-    &:first-of-type {
-      padding-left: 15px;
+    td {
+      &:first-of-type {
+        padding-left: 15px;
+      }
+
+      padding: 18px 8px;
+      overflow-x: hidden;
+      word-wrap: break-word;
     }
 
-    padding: 18px 8px;
-    overflow-x: hidden;
-    word-wrap: break-word;
   }
 
-}
+  .match-detail-dialog-container {
+    position: fixed;
+    width: 100vw;
+    left: 0;
+    z-index: 1;
+    display: flex;
+    justify-content: center;
 
-.match-detail-dialog-container {
-  position: fixed;
-  width: 100vw;
-  left: 0;
-  z-index: 1;
-  display: flex;
-  justify-content: center;
+    .match-detail-dialog {
+      display: block;
+      padding: 1em;
+      color: rgba(0,0,0,.54);
+      width: 100%;
+      max-width: 280px;
+      background-color: white;
+      box-shadow: 0 9px 46px 8px rgba(0,0,0,.14),0 11px 15px -7px rgba(0,0,0,.12),0 24px 38px 3px rgba(0,0,0,.2);
 
-  .match-detail-dialog {
-    display: block;
-    padding: 1em;
-    color: rgba(0,0,0,.54);
-    width: 100%;
-    max-width: 280px;
-    background-color: white;
-    box-shadow: 0 9px 46px 8px rgba(0,0,0,.14),0 11px 15px -7px rgba(0,0,0,.12),0 24px 38px 3px rgba(0,0,0,.2);
+      .content {
+        padding: 20px 24px 24px;
 
-    .content {
-      padding: 20px 24px 24px;
+        .field {
+          &:not(:last-child) {
+            margin-bottom: 15px;
+          }
 
-      .field {
-        &:not(:last-child) {
-          margin-bottom: 15px;
-        }
-
-        .name {
-          display: block;
-          font-weight: bold;
+          .name {
+            display: block;
+            font-weight: bold;
+          }
         }
       }
-    }
 
-    .actions {
-      display: flex;
-      flex-direction: row-reverse;
-      padding: 8px 8px 8px 24px;
+      .actions {
+        display: flex;
+        flex-direction: row-reverse;
+        padding: 8px 8px 8px 24px;
+      }
     }
   }
 }

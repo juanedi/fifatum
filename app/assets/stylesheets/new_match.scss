@@ -1,0 +1,63 @@
+#new-match {
+  display: flex;
+  flex-direction: column;
+  padding-top: 70px;
+  min-height: 400px;
+  height: 70vh;
+
+  select {
+    -webkit-appearance: none;
+    width: 100%;
+    font-size: 18px;
+    text-align-last: center;
+    height: 55px;
+    background-color: #EEEEEE;
+    margin-bottom: 20px;
+  }
+
+  label {
+    display: block;
+    text-transform: uppercase;
+    font-size: 12px;
+    margin-bottom: 20px;
+  }
+
+  .select-team-btn {
+    width: 100%;
+    height: 55px;
+    margin-bottom: 20px;
+  }
+
+  .actions {
+    text-align: center;
+    margin-top: 40px;
+
+    .main-action-btn {
+      width: 70%;
+    }
+
+    .action-btn {
+      &:not(:last-child) {
+        margin-right: 15px;
+      }
+      width: 45%;
+    }
+  }
+
+  .score-column {
+    .name {
+      font-size: 15px;
+    }
+    .team {
+      font-size: 17px;
+    }
+    .score {
+      font-size: 50px;
+      text-align: center;
+    }
+    .goal-btn {
+      margin-top: 10px;
+      width: 100%;
+    }
+  }
+}

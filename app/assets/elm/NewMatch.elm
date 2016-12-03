@@ -11,7 +11,7 @@ module NewMatch
 import Api exposing (User, League, Team)
 import Html
 import Html exposing (Html, div, text, label, select)
-import Html.Attributes exposing (for, id, style, value, selected, disabled)
+import Html.Attributes exposing (for, id, style, value, selected, disabled, class)
 import Material
 import Material.Button as Button
 import Material.Grid exposing (grid, cell, size, Device(..))
@@ -398,39 +398,27 @@ initTeamSelectionWhenReady model =
 
 view : Model -> Html Msg
 view model =
-    let
-        column =
-            div
-                [ style
-                    [ ( "display", "flex" )
-                    , ( "flex-direction", "column" )
-                    , ( "padding-top", "70px" )
-                    , ( "min-height", "400px" )
-                    , ( "height", "70vh" )
-                    ]
-                ]
-    in
-        case model.state of
-            Loading _ ->
-                Shared.loading
+    case model.state of
+        Loading _ ->
+            Shared.loading
 
-            NoData msg ->
-                Shared.noData msg
+        NoData msg ->
+            Shared.noData msg
 
-            TeamSelection state ->
-                column <|
-                    teamSelectionView model state
+        TeamSelection state ->
+            div [ id "new-match" ] <|
+                teamSelectionView model state
 
-            ExpandedSelection state ->
-                column <|
-                    expandedSelectionView model state
+        ExpandedSelection state ->
+            div [ id "new-match" ] <|
+                expandedSelectionView model state
 
-            Scoring state ->
-                column <|
-                    scoringView model state
+        Scoring state ->
+            div [ id "new-match" ] <|
+                scoringView model state
 
-            Submitted ->
-                Shared.loading
+        Submitted ->
+            Shared.loading
 
 
 teamSelectionView : Model -> TeamSelectionState -> List (Html Msg)
@@ -443,9 +431,7 @@ teamSelectionView model state =
                         [ mdlId ]
                         model.mdl
                         [ Button.raised
-                        , Options.css "width" "100%"
-                        , Options.css "height" "55px"
-                        , Options.css "margin-bottom" "20px"
+                        , Options.cs "select-team-btn"
                         , Button.disabled
                             `Options.when` disabled
                         , Button.onClick
@@ -483,17 +469,17 @@ teamSelectionView model state =
                                     |> Maybe.map (MTeamSelection << TeamChange target)
                                     |> Maybe.withDefault (MTeamSelection (ExpandSelection target))
                         in
-                            select [ id comboId, style comboStyles, Shared.onSelect onSelect ] <|
+                            select [ id comboId, Shared.onSelect onSelect ] <|
                                 (List.map teamComboOption teams)
                                     ++ [ otherComboOption ]
     in
         [ div [ style [ ( "flex-grow", "1" ) ] ]
-            [ fieldLabel "select-team1" "Your Team"
+            [ label [ for "select-team1" ] [ text "Your Team" ]
             , teamSelect Own state.ownTeam mdlIds.teamSelection1 "select-team1" (Just state.ownRecentTeams)
             ]
         , div [ style [ ( "flex-grow", "1" ) ] ]
-            [ fieldLabel "select-rival" "Rival"
-            , Html.select [ id "select-rival", style comboStyles, Shared.onSelect (MTeamSelection << RivalChanged) ] <|
+            [ label [ for "select-rival" ] [ text "Rival" ]
+            , Html.select [ id "select-rival", Shared.onSelect (MTeamSelection << RivalChanged) ] <|
                 List.map
                     (\user ->
                         Html.option
@@ -504,8 +490,7 @@ teamSelectionView model state =
             , teamSelect Rival state.rivalTeam mdlIds.teamSelection2 "select-team2" state.rivalRecentTeams
             ]
         , div
-            [ style [ ( "text-align", "center" ), ( "margin-top", "40px" ) ]
-            ]
+            [ class "actions" ]
             [ let
                 attributes =
                     case ( state.ownTeam, state.rivalTeam ) of
@@ -532,7 +517,7 @@ expandedSelectionView model state =
                     Debug.crash "invalid option"
 
         leagueSelect =
-            Html.select [ id "select-league", style comboStyles, Shared.onSelect onLeagueSelect ] <|
+            Html.select [ id "select-league", Shared.onSelect onLeagueSelect ] <|
                 List.map
                     (\league ->
                         Html.option
@@ -560,7 +545,6 @@ expandedSelectionView model state =
             Html.select
                 [ id "select-team"
                 , disabled (state.teams == Nothing)
-                , style comboStyles
                 , Shared.onSelect onTeamSelect
                 ]
             <|
@@ -579,16 +563,15 @@ expandedSelectionView model state =
                     (Maybe.withDefault [] state.teams)
     in
         [ div [ style [ ( "flex-grow", "1" ) ] ]
-            [ fieldLabel "select-league" "League"
+            [ label [ for "select-league" ] [ text "League" ]
             , leagueSelect
             ]
         , div [ style [ ( "flex-grow", "1" ) ] ]
-            [ fieldLabel "team" "Team"
+            [ label [ for "team" ] [ text "Team" ]
             , teamSelect
             ]
         , div
-            [ style [ ( "text-align", "center" ), ( "margin-top", "40px" ) ]
-            ]
+            [ class "action" ]
             [ mainActionButton model.mdl mdlIds.expandedSelectionDone "Done" [ Button.onClick (MExpandedSelection Done) ] ]
         ]
 
@@ -598,22 +581,11 @@ scoringView model state =
     let
         teamDisplay target =
             let
-                halfWidth =
-                    [ size Tablet 3, size Desktop 6, size Phone 2 ]
-
-                verticalCenter =
-                    [ ( "position", "relative" )
-                    , ( "top", "50%" )
-                    , ( "transform", "translateY(-50%)" )
-                    ]
-
                 halfWidthColumn content =
-                    cell halfWidth
+                    cell [ size Tablet 3, size Desktop 6, size Phone 2 ]
                         [ div
-                            [ style [ ( "height", "100%" ) ] ]
-                            [ div [ style verticalCenter ]
-                                content
-                            ]
+                            [ class "score-column vertical-center-container" ]
+                            [ div [ class "vertical-center" ] content ]
                         ]
 
                 ( name, teamName, score, goalButtonId ) =
@@ -630,18 +602,17 @@ scoringView model state =
                         model.mdl
                         [ Button.onClick (MScoring <| Goal target)
                         , Button.raised
-                        , Options.css "margin-top" "10px"
-                        , Options.css "width" "100%"
+                        , Options.cs "goal-btn"
                         ]
-                        [ text "GOAL" ]
+                        [ text "Goal" ]
             in
                 grid []
                     [ halfWidthColumn
-                        [ Html.p [ style [ ( "font-size", "15px" ) ] ] [ text name ]
-                        , Html.p [ style [ ( "font-size", "17px" ) ] ] [ text teamName ]
+                        [ Html.p [ class "name" ] [ text name ]
+                        , Html.p [ class "team" ] [ text teamName ]
                         ]
                     , halfWidthColumn
-                        [ Html.p [ style [ ( "font-size", "50px" ), ( "text-align", "center" ) ] ] [ text (toString score) ]
+                        [ Html.p [ class "score" ] [ text (toString score) ]
                         , goalButton
                         ]
                     ]
@@ -653,8 +624,7 @@ scoringView model state =
                 [ Button.onClick (MScoring Reset)
                 , Button.colored
                 , Button.raised
-                , Options.css "width" "45%"
-                , Options.css "margin-right" "15px"
+                , Options.cs "action-btn"
                 ]
                 [ text "Reset" ]
 
@@ -665,7 +635,7 @@ scoringView model state =
                 [ Button.onClick (MScoring Report)
                 , Button.colored
                 , Button.raised
-                , Options.css "width" "45%"
+                , Options.cs "action-btn"
                 ]
                 [ text "Report" ]
     in
@@ -674,8 +644,7 @@ scoringView model state =
         , div [ style [ ( "flex-grow", "1" ) ] ]
             [ teamDisplay Rival ]
         , div
-            [ style [ ( "text-align", "center" ), ( "margin-top", "40px" ) ]
-            ]
+            [ class "actions" ]
             [ resetButton
             , reportButton
             ]
@@ -686,34 +655,8 @@ mainActionButton mdl mdlId t attrs =
     Button.render Mdl
         [ mdlId ]
         mdl
-        (attrs ++ [ Button.colored, Button.raised, Options.css "width" "70%" ])
+        (attrs ++ [ Button.colored, Button.raised, Options.cs "main-action-btn" ])
         [ text t ]
-
-
-fieldLabel : String -> String -> Html a
-fieldLabel forId t =
-    label
-        [ for forId
-        , style
-            [ ( "display", "block" )
-            , ( "text-transform", "uppercase" )
-            , ( "font-size", "12px" )
-            , ( "margin-bottom", "20px" )
-            ]
-        ]
-        [ text t ]
-
-
-comboStyles : List ( String, String )
-comboStyles =
-    [ ( "-webkit-appearance", "none" )
-    , ( "width", "100%" )
-    , ( "font-size", "18px" )
-    , ( "text-align-last", "center" )
-    , ( "height", "55px" )
-    , ( "background-color", "#EEEEEE" )
-    , ( "margin-bottom", "20px" )
-    ]
 
 
 mdlIds =

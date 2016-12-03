@@ -10,7 +10,7 @@ module Stats
 
 import Api exposing (User)
 import Html exposing (Html, div, span, text, p)
-import Html.Attributes exposing (class)
+import Html.Attributes exposing (id, class)
 import Html.Events
 import Material
 import Material.Button as Button
@@ -144,7 +144,7 @@ recentMatchesView mdl user recentMatches openDetail =
                     content
                 ]
     in
-        div [] <|
+        div [ id "stats" ] <|
             SelectList.select
                 [ include <| Html.h4 [] [ text "Last matches" ]
                 , maybe <|

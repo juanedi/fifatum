@@ -69,26 +69,30 @@ view model =
                 Shared.loading
 
             Loaded ranking ->
-                div
-                    []
-                    [ Table.table [ Options.css "width" "100%" ]
-                        [ Table.thead []
-                            [ Table.tr []
-                                [ Table.th [ center ] [ text "Position" ]
-                                , Table.th [] [ text "Name" ]
-                                , Table.th [] [ text "Last match" ]
-                                ]
-                            ]
-                        , Table.tbody []
-                            (ranking
-                                |> List.indexedMap
-                                    (\index item ->
-                                        Table.tr []
-                                            [ Table.td [ center ] [ text (toString (index + 1)) ]
-                                            , Table.td [] [ text item.name ]
-                                            , Table.td [] [ text item.lastMatch ]
-                                            ]
-                                    )
-                            )
-                        ]
-                    ]
+                Shared.noData "Nothing here yet :)"
+
+
+
+-- div
+--     []
+--     [ Table.table [ Options.css "width" "100%" ]
+--         [ Table.thead []
+--             [ Table.tr []
+--                 [ Table.th [ center ] [ text "Position" ]
+--                 , Table.th [] [ text "Name" ]
+--                 , Table.th [] [ text "Last match" ]
+--                 ]
+--             ]
+--         , Table.tbody []
+--             (ranking
+--                 |> List.indexedMap
+--                     (\index item ->
+--                         Table.tr []
+--                             [ Table.td [ center ] [ text (toString (index + 1)) ]
+--                             , Table.td [] [ text item.name ]
+--                             , Table.td [] [ text item.lastMatch ]
+--                             ]
+--                     )
+--             )
+--         ]
+--     ]
