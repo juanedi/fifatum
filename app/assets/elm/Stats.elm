@@ -245,6 +245,7 @@ versusView mdl user stats openDetail =
                         , Table.tbody
                             []
                             (stats
+                                |> List.sortBy (\stat -> stat.lost - stat.won)
                                 |> List.indexedMap
                                     (\index stat ->
                                         Table.tr []
