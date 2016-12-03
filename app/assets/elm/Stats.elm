@@ -193,13 +193,13 @@ matchDetailDialog mdl user match =
                 [ text "Close" ]
 
         field name value =
-            div [ class "matchDetailField" ]
-                [ span [ class "fieldName" ] [ text name ]
-                , span [ class "fieldValue" ] [ text value ]
+            div [ class "field" ]
+                [ span [ class "name" ] [ text name ]
+                , span [ class "value" ] [ text value ]
                 ]
     in
-        div [ class "matchDetailDialogContainer" ]
-            [ div [ class "matchDetailDialog" ]
+        div [ class "match-detail-dialog-container" ]
+            [ div [ class "match-detail-dialog" ]
                 [ div [ class "content" ]
                     [ field "Rival" rival.name
                     , field "Score" (score user match)
