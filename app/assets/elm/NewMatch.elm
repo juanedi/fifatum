@@ -14,8 +14,8 @@ import Html exposing (Html, div, text, label, select)
 import Html.Attributes exposing (for, id, style, value, selected, disabled)
 import Material
 import Material.Button as Button
-import Material.Options as Options
 import Material.Grid exposing (grid, cell, size, Device(..))
+import Material.Options as Options
 import Return exposing (return, singleton, command)
 import Shared
 import Util
