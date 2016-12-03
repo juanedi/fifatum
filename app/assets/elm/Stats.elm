@@ -9,13 +9,17 @@ module Stats
         )
 
 import Api exposing (User)
-import Html exposing (Html, div, text)
+import Html exposing (Html, div, span, text, p)
+import Html.Attributes exposing (class)
+import Html.Events
 import Material
+import Material.Button as Button
 import Material.Layout as Layout
 import Material.Menu as Menu
 import Material.Options as Options exposing (css)
 import Material.Table as Table
 import Return
+import SelectList exposing (include, maybe)
 import Shared
 import String
 import Util exposing (dateString)
@@ -23,7 +27,7 @@ import Util exposing (dateString)
 
 type State
     = Loading
-    | Loaded Api.Stats
+    | RecentMatches { stats : Api.Stats, openDetail : Maybe Api.Match }
 
 
 type alias Model =
@@ -37,6 +41,8 @@ type Msg
     = Mdl (Material.Msg Msg)
     | FetchOk Api.Stats
     | FetchFailed
+    | OpenMatchDetail Api.Match
+    | CloseMatchDetail
 
 
 init : User -> ( Model, Cmd Msg )
@@ -51,17 +57,25 @@ init user =
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    case msg of
-        Mdl msg ->
+    case ( model.state, msg ) of
+        ( _, Mdl msg ) ->
             Material.update msg model
 
-        FetchOk stats ->
+        ( Loading, FetchOk stats ) ->
             Return.singleton
-                { model | state = Loaded stats }
+                { model | state = RecentMatches { stats = stats, openDetail = Nothing } }
 
-        FetchFailed ->
-            -- TODO
+        ( Loading, FetchFailed ) ->
             Return.singleton model
+
+        ( RecentMatches state, OpenMatchDetail match ) ->
+            Return.singleton { model | state = RecentMatches { state | openDetail = Just match } }
+
+        ( RecentMatches state, CloseMatchDetail ) ->
+            Return.singleton { model | state = RecentMatches { state | openDetail = Nothing } }
+
+        _ ->
+            Debug.crash "Invalid state"
 
 
 header : Model -> List (Html Msg)
@@ -113,39 +127,89 @@ view model =
             Loading ->
                 Shared.loading
 
-            Loaded stats ->
+            RecentMatches { stats, openDetail } ->
                 if List.isEmpty stats.recentMatches then
                     Shared.noData "You haven't played any matches yet"
                 else
-                    recentMatchesView model.user stats.recentMatches
+                    recentMatchesView model.mdl model.user stats.recentMatches openDetail
 
 
-recentMatchesView : User -> List Api.Match -> Html Msg
-recentMatchesView user recentMatches =
-    div
-        []
-        [ Html.h4 [] [ text "Last matches" ]
-        , Table.table [ Options.id "stats-table" ]
-            [ Table.thead []
-                [ Table.tr []
-                    [ Table.th [] [ text "Date" ]
-                    , Table.th [] [ text "Rival" ]
-                    , Table.th [] [ text "Result" ]
-                    ]
+recentMatchesView : Material.Model -> User -> List Api.Match -> Maybe Api.Match -> Html Msg
+recentMatchesView mdl user recentMatches openDetail =
+    let
+        matchCell match content =
+            Table.td []
+                [ div
+                    [ Html.Events.onClick (OpenMatchDetail match) ]
+                    content
                 ]
-            , Table.tbody []
-                (recentMatches
-                    |> List.indexedMap
-                        (\index match ->
-                            Table.tr []
-                                [ Table.td [] [ text (dateString match.date) ]
-                                , Table.td [] [ text (rivalName user match) ]
-                                , Table.td [] [ text (score user match) ]
+    in
+        div [] <|
+            SelectList.select
+                [ include <| Html.h4 [] [ text "Last matches" ]
+                , maybe <|
+                    Maybe.map
+                        (matchDetailDialog mdl user)
+                        openDetail
+                , include <|
+                    Table.table [ Options.id "stats-table" ]
+                        [ Table.thead []
+                            [ Table.tr []
+                                [ Table.th [] [ text "Date" ]
+                                , Table.th [] [ text "Rival" ]
+                                , Table.th [] [ text "Result" ]
                                 ]
-                        )
-                )
+                            ]
+                        , Table.tbody []
+                            (recentMatches
+                                |> List.indexedMap
+                                    (\index match ->
+                                        Table.tr
+                                            []
+                                            [ matchCell match [ text (dateString match.date) ]
+                                            , matchCell match [ text (rivalName user match) ]
+                                            , matchCell match [ text (score user match) ]
+                                            ]
+                                    )
+                            )
+                        ]
+                ]
+
+
+matchDetailDialog : Material.Model -> User -> Api.Match -> Html Msg
+matchDetailDialog mdl user match =
+    let
+        own =
+            ownParticipation user match
+
+        rival =
+            rivalParticipation user match
+
+        modalCloseButton =
+            Button.render Mdl
+                [ mdlIds.closeModal ]
+                mdl
+                [ Button.onClick CloseMatchDetail ]
+                [ text "Close" ]
+
+        field name value =
+            div [ class "matchDetailField" ]
+                [ span [ class "fieldName" ] [ text name ]
+                , span [ class "fieldValue" ] [ text value ]
+                ]
+    in
+        div [ class "matchDetailDialogContainer" ]
+            [ div [ class "matchDetailDialog" ]
+                [ div [ class "content" ]
+                    [ field "Rival" rival.name
+                    , field "Score" (score user match)
+                    , field "Your team" own.team.name
+                    , field "Rival's team" rival.team.name
+                    ]
+                , div [ class "actions" ]
+                    [ modalCloseButton ]
+                ]
             ]
-        ]
 
 
 rivalName : User -> Api.Match -> String
@@ -180,4 +244,5 @@ rivalParticipation user match =
 
 mdlIds =
     { menu = 1
+    , closeModal = 2
     }
