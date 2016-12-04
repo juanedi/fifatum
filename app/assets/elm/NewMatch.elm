@@ -571,7 +571,7 @@ expandedSelectionView model state =
             , teamSelect
             ]
         , div
-            [ class "action" ]
+            [ class "actions" ]
             [ mainActionButton model.mdl mdlIds.expandedSelectionDone "Done" [ Button.onClick (MExpandedSelection Done) ] ]
         ]
 
