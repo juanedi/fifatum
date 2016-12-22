@@ -210,7 +210,7 @@ updateLoading model state msg =
     initTeamSelectionWhenReady <|
         case msg of
             FetchedOwnRecentTeams teams ->
-                { model | state = Loading { state | ownRecentTeams = Just (List.sortBy .name teams) } }
+                { model | state = Loading { state | ownRecentTeams = Just teams } }
 
             FetchedOtherUsers users ->
                 let
@@ -239,15 +239,11 @@ updateTeamSelection model state msg =
     in
         case msg of
             FetchedRivalRecentTeams teams ->
-                let
-                    sorted =
-                        List.sortBy .name teams
-                in
-                    setState
-                        { state
-                            | rivalTeam = List.head sorted
-                            , rivalRecentTeams = Just sorted
-                        }
+                setState
+                    { state
+                        | rivalTeam = List.head teams
+                        , rivalRecentTeams = Just teams
+                    }
 
             RivalChanged userId ->
                 let

@@ -194,6 +194,36 @@ RSpec.describe ApiController do
       end
     end
 
+    describe "recent teams" do
+      it "returns empty array if user has no matches" do
+        get :recent_teams, params: { id: current_user.id }
+        expect(json_response).to eq([])
+      end
+
+      it "returns the last used teams order by last used date" do
+        Match.create!(
+          user1_id: current_user.id, user1_team_id: t1.id, user1_goals: 3,
+          user2_id: other_user.id, user2_team_id: t2.id, user2_goals: 1
+        )
+
+        Match.create!(
+          user1_id: other_user.id, user1_team_id: t1.id, user1_goals: 2,
+          user2_id: current_user.id, user2_team_id: t2.id, user2_goals: 0
+        )
+
+        get :recent_teams, params: { id: current_user.id }
+        expect(json_response).to eq([t2.api_json, t1.api_json])
+
+        Match.create!(
+          user1_id: current_user.id, user1_team_id: t1.id, user1_goals: 3,
+          user2_id: other_user.id, user2_team_id: t2.id, user2_goals: 1
+        )
+
+        get :recent_teams, params: { id: current_user.id }
+        expect(json_response).to eq([t1.api_json, t2.api_json])
+      end
+    end
+
     describe "reporting matches" do
       it "created a new record in the database" do
         expect {
