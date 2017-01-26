@@ -59,7 +59,7 @@ main =
         { init = init
         , view = view
         , update = update
-        , subscriptions = \model -> Layout.subs Mdl model.mdl
+        , subscriptions = Material.subscriptions Mdl
         }
 
 
@@ -68,7 +68,6 @@ init flags location =
     location
         |> locationParser
         |> initPage flags
-        |> Return.command (Layout.sub0 Mdl)
 
 
 initPage : Flags -> Route -> ( Model, Cmd Msg )
@@ -80,26 +79,30 @@ initPage flags route =
             , route = route
             , pageModel = pageModel
             }
+
+        pageInit =
+            case route of
+                NotFoundRoute ->
+                    Return.singleton (initModel NotFound)
+
+                VersusRoute ->
+                    Versus.init flags.user
+                        |> Return.mapBoth VersusMsg (VersusModel >> initModel)
+
+                StatsRoute ->
+                    Stats.init flags.user
+                        |> Return.mapBoth StatsMsg (StatsModel >> initModel)
+
+                RankingRoute ->
+                    Ranking.init
+                        |> Return.mapBoth RankingMsg (RankingModel >> initModel)
+
+                NewMatchRoute ->
+                    NewMatch.init flags.user
+                        |> Return.mapBoth NewMatchMsg (NewMatchModel >> initModel)
     in
-        case route of
-            NotFoundRoute ->
-                Return.singleton (initModel NotFound)
-
-            VersusRoute ->
-                Versus.init flags.user
-                    |> Return.mapBoth VersusMsg (VersusModel >> initModel)
-
-            StatsRoute ->
-                Stats.init flags.user
-                    |> Return.mapBoth StatsMsg (StatsModel >> initModel)
-
-            RankingRoute ->
-                Ranking.init
-                    |> Return.mapBoth RankingMsg (RankingModel >> initModel)
-
-            NewMatchRoute ->
-                NewMatch.init flags.user
-                    |> Return.mapBoth NewMatchMsg (NewMatchModel >> initModel)
+        pageInit
+            |> Return.command (Material.init Mdl)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
