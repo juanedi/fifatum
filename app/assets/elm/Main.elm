@@ -177,9 +177,9 @@ view model =
 drawer : Model -> List (Html Msg)
 drawer model =
     let
-        menuLink href label route =
+        menuLink label route =
             Layout.link
-                [ Layout.href href
+                [ Layout.href (Routing.routeToPath route)
                 , Options.onClick (Layout.toggleDrawer Mdl)
                 , Options.cs "mdl-navigation__link--current" |> Options.when (model.route == route)
                 ]
@@ -187,9 +187,9 @@ drawer model =
     in
         [ Layout.title [] [ text model.user.name ]
         , Layout.navigation []
-            [ menuLink "#versus" "Rivals" VersusRoute
-            , menuLink "#stats" "Matches" StatsRoute
-            , menuLink "#ranking" "Ranking" RankingRoute
+            [ menuLink "Rivals" VersusRoute
+            , menuLink "Matches" StatsRoute
+            , menuLink "Ranking" RankingRoute
             , Html.hr [] []
             , Layout.link [ Layout.href "/logout" ] [ text "Logout" ]
             ]

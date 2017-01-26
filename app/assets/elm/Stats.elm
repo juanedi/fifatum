@@ -104,8 +104,7 @@ recentMatchesView mdl user recentMatches openDetail =
     in
         div [ id "stats" ] <|
             SelectList.select
-                [ include <| Html.h5 [] [ text "Last matches" ]
-                , maybe <|
+                [ maybe <|
                     Maybe.map
                         (matchDetailDialog mdl user)
                         openDetail

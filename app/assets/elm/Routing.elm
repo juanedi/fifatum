@@ -4,6 +4,7 @@ module Routing
         , locationParser
         , navigate
         , navigateToRoot
+        , routeToPath
         )
 
 import Navigation
@@ -23,7 +24,7 @@ locationParser location =
     let
         matchers =
             oneOf
-                [ map VersusRoute (s "versus")
+                [ map VersusRoute (s "rivals")
                 , map StatsRoute (s "stats")
                 , map RankingRoute (s "ranking")
                 , map NewMatchRoute (s "match")
@@ -51,7 +52,7 @@ routeToPath : Route -> String
 routeToPath route =
     case route of
         VersusRoute ->
-            "#versus"
+            "#rivals"
 
         RankingRoute ->
             "#ranking"
