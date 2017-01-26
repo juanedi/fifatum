@@ -7,12 +7,12 @@ module Routing
         )
 
 import Navigation
-import String
 import UrlParser exposing (..)
 
 
 type Route
     = RankingRoute
+    | VersusRoute
     | StatsRoute
     | NewMatchRoute
     | NotFoundRoute
@@ -23,13 +23,14 @@ locationParser location =
     let
         matchers =
             oneOf
-                [ map StatsRoute (s "stats")
+                [ map VersusRoute (s "versus")
+                , map StatsRoute (s "stats")
                 , map RankingRoute (s "ranking")
                 , map NewMatchRoute (s "match")
                 ]
     in
         if location.hash == "" then
-            StatsRoute
+            VersusRoute
         else
             location
                 |> parseHash matchers
@@ -49,6 +50,9 @@ navigate route =
 routeToPath : Route -> String
 routeToPath route =
     case route of
+        VersusRoute ->
+            "#versus"
+
         RankingRoute ->
             "#ranking"
 

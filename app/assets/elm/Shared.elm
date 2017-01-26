@@ -4,14 +4,20 @@ module Shared
         , titleHeader
         , onSelect
         , noData
+        , clickableCell
+        , modalDialog
         )
 
-import Html exposing (Html, div, text)
-import Html.Attributes
+import Html exposing (Html, div, span, text, p)
+import Html.Attributes exposing (id, class)
 import Html.Events as Events
 import Json.Decode
+import Material
+import Material.Button as Button
 import Material.Layout as Layout
+import Material.Options as Options exposing (cs, css)
 import Material.Progress as Progress
+import Material.Table as Table
 import String
 
 
@@ -60,3 +66,37 @@ noData : String -> Html msg
 noData m =
     div [ Html.Attributes.class "no-data" ]
         [ text m ]
+
+
+clickableCell msg options content =
+    Table.td options
+        [ div
+            [ Events.onClick msg ]
+            content
+        ]
+
+
+modalDialog : Material.Model -> (Material.Msg msg -> msg) -> Int -> msg -> List ( String, String ) -> Html msg
+modalDialog mdl mdlTagger closeButtonId closeMsg fields =
+    let
+        modalCloseButton =
+            Button.render mdlTagger
+                [ closeButtonId ]
+                mdl
+                [ Options.onClick closeMsg ]
+                [ text "Close" ]
+
+        field name value =
+            div [ class "field" ]
+                [ span [ class "name" ] [ text name ]
+                , span [ class "value" ] [ text value ]
+                ]
+    in
+        div [ class "match-detail-dialog-container" ]
+            [ div [ class "match-detail-dialog" ]
+                [ div [ class "content" ] <|
+                    List.map (uncurry field) fields
+                , div [ class "actions" ]
+                    [ modalCloseButton ]
+                ]
+            ]

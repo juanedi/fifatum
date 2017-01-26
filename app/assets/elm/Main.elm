@@ -15,6 +15,7 @@ import Return
 import Routing exposing (locationParser, Route(..))
 import Shared
 import Stats
+import Versus
 
 
 type alias Flags =
@@ -27,11 +28,13 @@ type Msg
     | Mdl (Material.Msg Msg)
     | RankingMsg Ranking.Msg
     | StatsMsg Stats.Msg
+    | VersusMsg Versus.Msg
     | NewMatchMsg NewMatch.Msg
 
 
 type PageModel
     = NotFound
+    | VersusModel Versus.Model
     | StatsModel Stats.Model
     | RankingModel Ranking.Model
     | NewMatchModel NewMatch.Model
@@ -82,6 +85,10 @@ initPage flags route =
             NotFoundRoute ->
                 Return.singleton (initModel NotFound)
 
+            VersusRoute ->
+                Versus.init flags.user
+                    |> Return.mapBoth VersusMsg (VersusModel >> initModel)
+
             StatsRoute ->
                 Stats.init flags.user
                     |> Return.mapBoth StatsMsg (StatsModel >> initModel)
@@ -119,6 +126,11 @@ update msg model =
                         Ranking.update pMsg pModel
                             |> Return.map (setPageModel RankingModel)
                             |> Return.mapCmd RankingMsg
+
+                    ( VersusModel pModel, VersusMsg pMsg ) ->
+                        Versus.update pMsg pModel
+                            |> Return.map (setPageModel VersusModel)
+                            |> Return.mapCmd VersusMsg
 
                     ( StatsModel pModel, StatsMsg pMsg ) ->
                         Stats.update pMsg pModel
@@ -172,7 +184,8 @@ drawer model =
     in
         [ Layout.title [] [ text model.user.name ]
         , Layout.navigation []
-            [ menuLink "#stats" "Stats" StatsRoute
+            [ menuLink "#versus" "Rivals" VersusRoute
+            , menuLink "#stats" "Matches" StatsRoute
             , menuLink "#ranking" "Ranking" RankingRoute
             , Html.hr [] []
             , Layout.link [ Layout.href "/logout" ] [ text "Logout" ]
@@ -186,9 +199,11 @@ header model =
         NotFound ->
             []
 
+        VersusModel versusModel ->
+            Shared.titleHeader "Rivals"
+
         StatsModel statsModel ->
-            Stats.header statsModel
-                |> List.map (Html.map StatsMsg)
+            Shared.titleHeader "Matches"
 
         RankingModel rankingModel ->
             Shared.titleHeader "Ranking"
@@ -204,6 +219,11 @@ body model =
             (case model.pageModel of
                 NotFound ->
                     [ div [] [ text "ooops" ] ]
+
+                VersusModel versusModel ->
+                    [ Html.map VersusMsg (Versus.view versusModel)
+                    , newMatchButton 0 model
+                    ]
 
                 StatsModel statsModel ->
                     [ Html.map StatsMsg (Stats.view statsModel)

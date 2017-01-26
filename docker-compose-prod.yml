@@ -1,0 +1,30 @@
+version: '2'
+services:
+  postgres:
+    image: postgres:9.5
+    environment:
+      POSTGRES_PASSWORD: fifatum
+      POSTGRES_USER: fifatum
+      POSTGRES_DB: fifatum
+    ports:
+      - "5432:5432"
+    volumes:
+      - db:/var/lib/postgresql/data
+  web:
+    build: .
+    environment:
+      - DATABASE_HOST=postgres
+      - DATABASE_USER=fifatum
+      - DATABASE_PASSWORD=fifatum
+      - DATABASE_NAME=fifatum
+      - RAILS_LOG_TO_STDOUT=1
+      - SECRET_KEY_BASE=fpp
+      - GOOGLE_CLIENT_ID=449629907330-1knogq4qse2pn6bmtqpm7njt6u77cl2r.apps.googleusercontent.com
+      - GOOGLE_CLIENT_SECRET=LligVr4shcOxcTw5JGM1_qkJ
+      - PUMA_OPTIONS=--preload -w 1
+    ports:
+      - '8000:80'
+
+
+volumes:
+  db:
