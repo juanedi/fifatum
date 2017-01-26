@@ -4,10 +4,10 @@
 
 ### Elm
 
-The client application is programmed in [Elm](http://elm-lang.org/) v.17.1. To install the compiler simply run:
+The client application is programmed in [Elm](http://elm-lang.org/) v0.18.0. To install the compiler simply run:
 
 ```
-$ npm install elm@0.17.1
+$ npm install elm@0.18.0
 ```
 
 ### Rails
