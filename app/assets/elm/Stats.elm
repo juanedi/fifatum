@@ -72,7 +72,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case ( model.state, msg ) of
         ( _, Mdl msg ) ->
-            Material.update msg model
+            Material.update Mdl msg model
 
         ( Loading, FetchOk stats ) ->
             Return.singleton <|
@@ -311,7 +311,7 @@ modalDialog mdl closeMsg fields =
             Button.render Mdl
                 [ mdlIds.closeModal ]
                 mdl
-                [ Button.onClick closeMsg ]
+                [ Options.onClick closeMsg ]
                 [ text "Close" ]
 
         field name value =

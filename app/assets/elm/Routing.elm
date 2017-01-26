@@ -1,7 +1,7 @@
 module Routing
     exposing
         ( Route(..)
-        , parser
+        , locationParser
         , navigate
         , navigateToRoot
         )
@@ -18,26 +18,22 @@ type Route
     | NotFoundRoute
 
 
-parser : Navigation.Parser (Route)
-parser =
-    Navigation.makeParser locationParser
-
-
 locationParser : Navigation.Location -> Route
 locationParser location =
     let
         matchers =
             oneOf
-                [ format StatsRoute (s "")
-                , format StatsRoute (s "stats")
-                , format RankingRoute (s "ranking")
-                , format NewMatchRoute (s "match")
+                [ map StatsRoute (s "stats")
+                , map RankingRoute (s "ranking")
+                , map NewMatchRoute (s "match")
                 ]
     in
-        location.hash
-            |> String.dropLeft 1
-            |> parse identity matchers
-            |> Result.withDefault NotFoundRoute
+        if location.hash == "" then
+            StatsRoute
+        else
+            location
+                |> parseHash matchers
+                |> Maybe.withDefault NotFoundRoute
 
 
 navigateToRoot : Cmd msg

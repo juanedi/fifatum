@@ -2,18 +2,17 @@ module Main exposing (..)
 
 import Api
 import Html exposing (Html, div, text)
-import Html.App
 import Material
 import Material.Button as Button
 import Material.Grid exposing (grid, cell, size, Device(..))
 import Material.Icon as Icon
 import Material.Layout as Layout
 import Material.Options as Options exposing (css)
-import Navigation
+import Navigation exposing (Location)
 import NewMatch
 import Ranking
 import Return
-import Routing exposing (parser, Route(..))
+import Routing exposing (locationParser, Route(..))
 import Shared
 import Stats
 
@@ -24,6 +23,7 @@ type alias Flags =
 
 type Msg
     = Navigate Route
+    | UrlChange Route
     | Mdl (Material.Msg Msg)
     | RankingMsg Ranking.Msg
     | StatsMsg Stats.Msg
@@ -49,20 +49,22 @@ type alias Id =
     Int
 
 
-main : Program Flags
+main : Program Flags Model Msg
 main =
-    Navigation.programWithFlags parser
+    Navigation.programWithFlags
+        (locationParser >> UrlChange)
         { init = init
         , view = view
         , update = update
-        , urlUpdate = \route model -> init { user = model.user } route
         , subscriptions = \model -> Layout.subs Mdl model.mdl
         }
 
 
-init : Flags -> Route -> ( Model, Cmd Msg )
-init flags route =
-    initPage flags route
+init : Flags -> Location -> ( Model, Cmd Msg )
+init flags location =
+    location
+        |> locationParser
+        |> initPage flags
         |> Return.command (Layout.sub0 Mdl)
 
 
@@ -101,8 +103,11 @@ update msg model =
                 |> Return.singleton
                 |> Return.command (Routing.navigate route)
 
+        UrlChange route ->
+            initPage { user = model.user } route
+
         Mdl msg ->
-            Material.update msg model
+            Material.update Mdl msg model
 
         _ ->
             let
@@ -160,9 +165,8 @@ drawer model =
         menuLink href label route =
             Layout.link
                 [ Layout.href href
-                , Layout.onClick (Layout.toggleDrawer Mdl)
-                , Options.cs "mdl-navigation__link--current"
-                    `Options.when` (model.route == route)
+                , Options.onClick (Layout.toggleDrawer Mdl)
+                , Options.cs "mdl-navigation__link--current" |> Options.when (model.route == route)
                 ]
                 [ text label ]
     in
@@ -184,7 +188,7 @@ header model =
 
         StatsModel statsModel ->
             Stats.header statsModel
-                |> List.map (Html.App.map StatsMsg)
+                |> List.map (Html.map StatsMsg)
 
         RankingModel rankingModel ->
             Shared.titleHeader "Ranking"
@@ -202,17 +206,17 @@ body model =
                     [ div [] [ text "ooops" ] ]
 
                 StatsModel statsModel ->
-                    [ Html.App.map StatsMsg (Stats.view statsModel)
+                    [ Html.map StatsMsg (Stats.view statsModel)
                     , newMatchButton 0 model
                     ]
 
                 RankingModel rankingModel ->
-                    [ Html.App.map RankingMsg (Ranking.view rankingModel)
+                    [ Html.map RankingMsg (Ranking.view rankingModel)
                     , newMatchButton 0 model
                     ]
 
                 NewMatchModel newMatchModel ->
-                    [ Html.App.map NewMatchMsg (NewMatch.view newMatchModel) ]
+                    [ Html.map NewMatchMsg (NewMatch.view newMatchModel) ]
             )
         ]
     ]
@@ -225,7 +229,7 @@ newMatchButton id model =
         model.mdl
         [ Button.fab
         , Button.colored
-        , Button.onClick (Navigate Routing.NewMatchRoute)
+        , Options.onClick (Navigate Routing.NewMatchRoute)
         , Options.cs "corner-btn"
         ]
         [ Icon.i "add" ]

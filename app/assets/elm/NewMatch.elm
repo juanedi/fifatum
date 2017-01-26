@@ -144,7 +144,7 @@ update msg model =
             singleton model
 
         Mdl msg ->
-            Material.update msg model
+            Material.update Mdl msg model
 
         FetchFailed ->
             -- TODO
@@ -428,9 +428,8 @@ teamSelectionView model state =
                         model.mdl
                         [ Button.raised
                         , Options.cs "select-team-btn"
-                        , Button.disabled
-                            `Options.when` disabled
-                        , Button.onClick
+                        , Button.disabled |> Options.when disabled
+                        , Options.onClick
                             (MTeamSelection (ExpandSelection target))
                         ]
                         [ text "Select" ]
@@ -491,7 +490,7 @@ teamSelectionView model state =
                 attributes =
                     case ( state.ownTeam, state.rivalTeam ) of
                         ( Just ot, Just rt ) ->
-                            [ Button.onClick (MTeamSelection (TeamSelectionDone ot rt)) ]
+                            [ Options.onClick (MTeamSelection (TeamSelectionDone ot rt)) ]
 
                         _ ->
                             [ Button.disabled ]
@@ -568,7 +567,7 @@ expandedSelectionView model state =
             ]
         , div
             [ class "actions" ]
-            [ mainActionButton model.mdl mdlIds.expandedSelectionDone "Done" [ Button.onClick (MExpandedSelection Done) ] ]
+            [ mainActionButton model.mdl mdlIds.expandedSelectionDone "Done" [ Options.onClick (MExpandedSelection Done) ] ]
         ]
 
 
@@ -596,7 +595,7 @@ scoringView model state =
                     Button.render Mdl
                         [ goalButtonId ]
                         model.mdl
-                        [ Button.onClick (MScoring <| Goal target)
+                        [ Options.onClick (MScoring <| Goal target)
                         , Button.raised
                         , Options.cs "goal-btn"
                         ]
@@ -617,7 +616,7 @@ scoringView model state =
             Button.render Mdl
                 [ mdlIds.reportMatch ]
                 model.mdl
-                [ Button.onClick (MScoring Reset)
+                [ Options.onClick (MScoring Reset)
                 , Button.colored
                 , Button.raised
                 , Options.cs "action-btn"
@@ -628,7 +627,7 @@ scoringView model state =
             Button.render Mdl
                 [ mdlIds.reportMatch ]
                 model.mdl
-                [ Button.onClick (MScoring Report)
+                [ Options.onClick (MScoring Report)
                 , Button.colored
                 , Button.raised
                 , Options.cs "action-btn"

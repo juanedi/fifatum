@@ -48,7 +48,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Mdl msg ->
-            Material.update msg model
+            Material.update Mdl msg model
 
         FetchOk ranking ->
             Return.singleton { model | state = Loaded ranking }

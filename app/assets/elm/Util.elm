@@ -63,9 +63,19 @@ unreachable =
 
 performMessage : msg -> Cmd msg
 performMessage msg =
-    Task.perform unreachable identity (Task.succeed msg)
+    Task.perform identity (Task.succeed msg)
 
 
 perform : msg -> ( model, Cmd msg ) -> ( model, Cmd msg )
 perform msg =
     Return.command (performMessage msg)
+
+
+unpackResult : (x -> r) -> (a -> r) -> Result x a -> r
+unpackResult onError onSuccess result =
+    case result of
+        Ok x ->
+            onSuccess x
+
+        Err y ->
+            onError y

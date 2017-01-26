@@ -18,12 +18,11 @@ module Api
         )
 
 import Date exposing (Date)
-import Dict exposing (Dict)
 import Http
-import Json.Decode as Decode exposing ((:=), list, dict, int, float, string)
+import Json.Decode as Decode exposing (field, list, dict, int, float, string)
 import Json.Encode as Encode
-import String
 import Task
+import Util exposing (unpackResult)
 
 
 type alias User =
@@ -96,26 +95,26 @@ type alias RivalStat =
 
 fetchUsers : (Http.Error -> msg) -> (List User -> msg) -> Cmd msg
 fetchUsers errorTagger okTagger =
-    Http.get (list userDecoder) "/api/users"
-        |> Task.perform errorTagger okTagger
+    Http.get "/api/users" (list userDecoder)
+        |> send errorTagger okTagger
 
 
 fetchRanking : (Http.Error -> msg) -> (Ranking -> msg) -> Cmd msg
 fetchRanking errorTagger okTagger =
-    Http.get (list rankingEntryDecoder) "/api/ranking"
-        |> Task.perform errorTagger okTagger
+    Http.get "/api/ranking" (list rankingEntryDecoder)
+        |> send errorTagger okTagger
 
 
 fetchStats : (Http.Error -> msg) -> (Stats -> msg) -> Cmd msg
 fetchStats errorTagger okTagger =
-    Http.get statsDecoder "/api/stats"
-        |> Task.perform errorTagger okTagger
+    Http.get "/api/stats" statsDecoder
+        |> send errorTagger okTagger
 
 
 fetchLeagues : (Http.Error -> msg) -> (List League -> msg) -> Cmd msg
 fetchLeagues errorTagger okTagger =
-    Http.get (list leagueDecoder) "/api/leagues"
-        |> Task.perform errorTagger okTagger
+    Http.get "/api/leagues" (list leagueDecoder)
+        |> send errorTagger okTagger
 
 
 fetchRecentTeams : (Http.Error -> msg) -> (List Team -> msg) -> User -> Cmd msg
@@ -123,12 +122,9 @@ fetchRecentTeams errorTagger okTagger user =
     let
         url =
             ("/api/users/" ++ (toString user.id) ++ "/recent_teams")
-
-        decoder =
-            list teamDecoder
     in
-        Http.get decoder url
-            |> Task.perform errorTagger okTagger
+        Http.get url (list teamDecoder)
+            |> send errorTagger okTagger
 
 
 fetchTeams : (Http.Error -> msg) -> (List Team -> msg) -> League -> Cmd msg
@@ -136,33 +132,32 @@ fetchTeams errorTagger okTagger league =
     let
         url =
             ("/api/leagues/" ++ (toString league.id) ++ "/teams")
-
-        decoder =
-            list teamDecoder
     in
-        Http.get decoder url
-            |> Task.perform errorTagger okTagger
+        Http.get url (list teamDecoder)
+            |> send errorTagger okTagger
 
 
-reportMatch : (Http.RawError -> msg) -> msg -> MatchReport -> Cmd msg
-reportMatch errorTagger okTagger matchReport =
+reportMatch : (Http.Error -> msg) -> msg -> MatchReport -> Cmd msg
+reportMatch errorTagger okMsg matchReport =
     let
-        body =
-            encodeReport matchReport
-                |> Encode.encode 0
-                |> Http.string
-
         request =
-            { verb = "POST"
-            , headers = [ ( "Content-Type", "application/json" ) ]
-            , url = "/api/matches"
-            , body = body
-            }
-
-        task =
-            Http.send Http.defaultSettings request
+            Http.request
+                { method = "POST"
+                , url = "/api/matches"
+                , headers = [ Http.header "Content-Type" "application/json" ]
+                , body = Http.jsonBody (encodeReport matchReport)
+                , expect = Http.expectString
+                , timeout = Nothing
+                , withCredentials = False
+                }
     in
-        Task.perform errorTagger (always okTagger) task
+        request
+            |> send errorTagger (always okMsg)
+
+
+send : (Http.Error -> msg) -> (a -> msg) -> Http.Request a -> Cmd msg
+send errorTagger okTagger request =
+    Http.send (unpackResult errorTagger okTagger) request
 
 
 encodeReport : MatchReport -> Encode.Value
@@ -178,62 +173,61 @@ encodeReport ( p1, p2 ) =
 
 userDecoder : Decode.Decoder User
 userDecoder =
-    Decode.object2 User
-        ("id" := int)
-        ("name" := string)
+    Decode.map2 User
+        (field "id" int)
+        (field "name" string)
 
 
 rankingEntryDecoder : Decode.Decoder RankingEntry
 rankingEntryDecoder =
-    Decode.object2 RankingEntry
-        ("name" := string)
-        ("lastMatch" := string)
+    Decode.map2 RankingEntry
+        (field "name" string)
+        (field "lastMatch" string)
 
 
 statsDecoder : Decode.Decoder Stats
 statsDecoder =
-    Decode.object2 Stats
-        ("recentMatches" := (list matchDecoder))
-        ("versus"
-            := list
-                (Decode.object6 RivalStat
-                    ("rivalName" := string)
-                    ("won" := int)
-                    ("tied" := int)
-                    ("lost" := int)
-                    ("goalsMade" := int)
-                    ("goalsReceived" := int)
-                )
+    Decode.map2 Stats
+        (field "recentMatches" (list matchDecoder))
+        (field "versus" <|
+            list <|
+                Decode.map6 RivalStat
+                    (field "rivalName" string)
+                    (field "won" int)
+                    (field "tied" int)
+                    (field "lost" int)
+                    (field "goalsMade" int)
+                    (field "goalsReceived" int)
         )
 
 
 matchDecoder : Decode.Decoder Match
 matchDecoder =
-    Decode.object4 Match
-        ("id" := int)
-        ("date" := (Decode.map ((\x -> x * 1000) >> Date.fromTime) float))
-        ("user1" := participationDecoder)
-        ("user2" := participationDecoder)
+    Decode.map4 Match
+        (field "id" int)
+        (field "date" (Decode.map ((\x -> x * 1000) >> Date.fromTime) float))
+        (field "user1" participationDecoder)
+        (field "user2" participationDecoder)
 
 
 participationDecoder : Decode.Decoder Participation
 participationDecoder =
-    Decode.object4 Participation
-        ("id" := int)
-        ("name" := string)
-        ("team" := teamDecoder)
-        ("goals" := int)
+    Decode.map4 Participation
+        (field "id" int)
+        (field "name" string)
+        (field "team" teamDecoder)
+        (field "goals" int)
 
 
 leagueDecoder : Decode.Decoder Team
 leagueDecoder =
-    Decode.object2 League
-        ("id" := int)
-        ("name" := string)
+    Decode.map2 League
+        (field "id" int)
+        (field "name" string)
 
 
 teamDecoder : Decode.Decoder Team
 teamDecoder =
-    Decode.object2 Team
-        ("id" := int)
-        ("name" := string)
+    Decode.map2 Team
+        (field "id" int)
+        (field "name" string)

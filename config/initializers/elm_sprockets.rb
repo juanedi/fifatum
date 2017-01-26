@@ -40,7 +40,12 @@ class ElmProcessor
   attr_reader :input
 
   def compile
-    Open3.popen3(cmd, "--yes", "--output", output_file.to_s, filename, chdir: Rails.root) do |_in, out, err, t|
+    args = []
+    args << "--yes"
+    args << "--output" << output_file.to_s << filename
+    args << "--debug" if Rails.env.development?
+
+    Open3.popen3(cmd, *args) do |_in, out, err, t|
       compiler_out = out.read
       compiler_err = err.read
       if t.value != 0
