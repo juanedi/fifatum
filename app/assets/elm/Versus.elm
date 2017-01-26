@@ -14,7 +14,6 @@ import Material
 import Material.Options as Options exposing (cs, css)
 import Material.Table as Table
 import Return
-import SelectList
 import SelectList exposing (include, maybe)
 import Shared
 
@@ -35,8 +34,8 @@ type Msg
     = Mdl (Material.Msg Msg)
     | FetchOk Api.Stats
     | FetchFailed
-    | OpenRivalDetail Api.RivalStat
-    | CloseRivalDetail
+    | OpenDetail Api.RivalStat
+    | CloseDetail
 
 
 init : User -> ( Model, Cmd Msg )
@@ -56,12 +55,8 @@ update msg model =
             Material.update Mdl msg model
 
         ( Loading, FetchOk stats ) ->
-            let
-                _ =
-                    Debug.log "ok!!!"
-            in
-                Return.singleton <|
-                    { model | state = Loaded { stats = stats, openDetail = Nothing } }
+            Return.singleton <|
+                { model | state = Loaded { stats = stats, openDetail = Nothing } }
 
         ( Loading, FetchFailed ) ->
             -- TODO
@@ -72,10 +67,10 @@ update msg model =
 
         ( Loaded state, msg ) ->
             case msg of
-                OpenRivalDetail stat ->
+                OpenDetail stat ->
                     Return.singleton { model | state = Loaded { state | openDetail = Just stat } }
 
-                CloseRivalDetail ->
+                CloseDetail ->
                     Return.singleton { model | state = Loaded { state | openDetail = Nothing } }
 
                 _ ->
@@ -100,7 +95,7 @@ versusView : Material.Model -> User -> List Api.RivalStat -> Maybe Api.RivalStat
 versusView mdl user stats openDetail =
     let
         onClick stat =
-            OpenRivalDetail stat
+            OpenDetail stat
     in
         div [ id "stats" ] <|
             SelectList.select
@@ -137,7 +132,7 @@ rivalStatDialog mdl stat =
     Shared.modalDialog mdl
         Mdl
         mdlIds.closeModal
-        CloseRivalDetail
+        CloseDetail
         [ ( "Rival", stat.rivalName )
         , ( "Balance", balance stat )
         , ( "Record", (toString stat.won) ++ " victories - " ++ (toString stat.tied) ++ " tied - " ++ (toString stat.lost) ++ " lost" )

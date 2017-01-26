@@ -10,17 +10,12 @@ module Stats
 import Api exposing (User)
 import Html exposing (Html, div, span, text, p)
 import Html.Attributes exposing (id, class)
-import Html.Events
 import Material
-import Material.Button as Button
-import Material.Layout as Layout
-import Material.Menu as Menu
 import Material.Options as Options exposing (cs, css)
 import Material.Table as Table
 import Return
 import SelectList exposing (include, maybe)
 import Shared
-import String
 import Util exposing (dateString)
 
 
@@ -44,8 +39,8 @@ type Msg
 
 
 type LoadedMsg
-    = OpenMatchDetail Api.Match
-    | CloseMatchDetail
+    = OpenDetail Api.Match
+    | Close
 
 
 init : User -> ( Model, Cmd Msg )
@@ -73,10 +68,10 @@ update msg model =
 
         ( Loaded state, MLoaded msg ) ->
             case msg of
-                OpenMatchDetail match ->
+                OpenDetail match ->
                     Return.singleton { model | state = Loaded { state | openDetail = Just match } }
 
-                CloseMatchDetail ->
+                Close ->
                     Return.singleton { model | state = Loaded { state | openDetail = Nothing } }
 
         _ ->
@@ -100,7 +95,7 @@ recentMatchesView : Material.Model -> User -> List Api.Match -> Maybe Api.Match 
 recentMatchesView mdl user recentMatches openDetail =
     let
         matchCell match options content =
-            Shared.clickableCell (MLoaded <| OpenMatchDetail match) options content
+            Shared.clickableCell (MLoaded <| OpenDetail match) options content
     in
         div [ id "stats" ] <|
             SelectList.select
@@ -145,7 +140,7 @@ matchDetailDialog mdl user match =
         Shared.modalDialog mdl
             Mdl
             mdlIds.closeModal
-            (MLoaded CloseMatchDetail)
+            (MLoaded Close)
             [ ( "Rival", rival.name )
             , ( "Score", (score user match) )
             , ( "Your team", own.team.name )
