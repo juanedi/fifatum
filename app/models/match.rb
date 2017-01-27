@@ -12,6 +12,12 @@ class Match < ActiveRecord::Base
          .includes(:user2).includes(:team2)
   end
 
+  def self.last_of(user)
+    Match.of_user(user)
+         .order(created_at: :desc)
+         .first
+  end
+
   def api_json
     {
       "id" => id,

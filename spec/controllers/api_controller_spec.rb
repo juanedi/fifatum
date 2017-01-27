@@ -167,7 +167,23 @@ RSpec.describe ApiController do
 
       it "returns all users" do
         get :users
-        expect(json_response).to eq([current_user.api_json, other_user.api_json, yet_another_user.api_json])
+        expect(json_response["users"]).to eq([current_user.api_json, other_user.api_json, yet_another_user.api_json])
+      end
+
+      it "distinguishes last played rival if requested" do
+        Match.create!(
+          user1_id: current_user.id, user1_team_id: t1.id, user1_goals: 1,
+          user2_id: other_user.id, user2_team_id: t2.id, user2_goals: 1
+        )
+
+        Match.create!(
+          user1_id: yet_another_user.id, user1_team_id: t2.id, user1_goals: 1,
+          user2_id: current_user.id, user2_team_id: t1.id, user2_goals: 1
+        )
+
+        get :users
+
+        expect(json_response["last_rival_id"]).to eq(yet_another_user.id)
       end
     end
 

@@ -1,6 +1,7 @@
 module Api
     exposing
         ( User
+        , UsersResponse
         , fetchUsers
         , Match
         , Participation
@@ -19,7 +20,7 @@ module Api
 
 import Date exposing (Date)
 import Http
-import Json.Decode as Decode exposing (field, list, dict, int, float, string)
+import Json.Decode as Decode exposing (field, list, dict, int, float, string, nullable)
 import Json.Encode as Encode
 import Task
 import Util exposing (unpackResult)
@@ -93,10 +94,22 @@ type alias RivalStat =
     }
 
 
-fetchUsers : (Http.Error -> msg) -> (List User -> msg) -> Cmd msg
+type alias UsersResponse =
+    { users : List User
+    , lastRivalId : Maybe Int
+    }
+
+
+fetchUsers : (Http.Error -> msg) -> (UsersResponse -> msg) -> Cmd msg
 fetchUsers errorTagger okTagger =
-    Http.get "/api/users" (list userDecoder)
-        |> send errorTagger okTagger
+    let
+        decoder =
+            Decode.map2 UsersResponse
+                (field "users" <| list userDecoder)
+                (field "last_rival_id" <| nullable int)
+    in
+        Http.get "/api/users" decoder
+            |> send errorTagger okTagger
 
 
 fetchRanking : (Http.Error -> msg) -> (Ranking -> msg) -> Cmd msg

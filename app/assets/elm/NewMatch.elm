@@ -89,7 +89,7 @@ type NewMatchEvent
 
 
 type LoadingMsg
-    = FetchedOtherUsers (List User)
+    = FetchedOtherUsers Api.UsersResponse
     | FetchedOwnRecentTeams (List Team)
     | FetchedLeagues (List League)
 
@@ -212,12 +212,12 @@ updateLoading model state msg =
             FetchedOwnRecentTeams teams ->
                 { model | state = Loading { state | ownRecentTeams = Just teams } }
 
-            FetchedOtherUsers users ->
+            FetchedOtherUsers { users, lastRivalId } ->
                 let
                     otherUsers =
                         users
                             |> List.filter (\u -> u.id /= model.user.id)
-                            |> List.sortBy .name
+                            |> List.sortBy (rivalSortCriteria lastRivalId)
                 in
                     if List.isEmpty otherUsers then
                         { model | state = NoData "There are no rivals to play against." }
@@ -229,6 +229,24 @@ updateLoading model state msg =
                     { model | state = NoData "There are no teams." }
                 else
                     { model | state = Loading { state | leagues = Just (List.sortBy .name leagues) } }
+
+
+rivalSortCriteria : Maybe Int -> User -> ( Int, String )
+rivalSortCriteria lastRivalId =
+    let
+        boolToInt b =
+            if b then
+                0
+            else
+                1
+
+        isLastRival user =
+            lastRivalId
+                |> Maybe.map ((==) user.id)
+                |> Maybe.withDefault False
+                |> boolToInt
+    in
+        \u -> ( isLastRival u, u.name )
 
 
 updateTeamSelection : Model -> TeamSelectionState -> TeamSelectMsg -> ( Model, Cmd Msg )

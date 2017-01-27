@@ -12,7 +12,18 @@ class ApiController < ApplicationController
   end
 
   def users
-    render json: User.all.map(&:api_json)
+    last_match = Match.last_of(@current_user)
+
+    if last_match
+      last_rival_id = last_match.participations_for(@current_user)["rival"]["id"]
+    else
+      last_rival_id = nil
+    end
+
+    all_users = User.all.map(&:api_json)
+
+    render json: { users: all_users,
+                   last_rival_id: last_rival_id }
   end
 
   def recent_teams
