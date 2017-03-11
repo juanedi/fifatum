@@ -1,6 +1,6 @@
 class ApiController < ApplicationController
 
-  before_action :authenticate
+  before_action :authenticate_api
 
   def ranking
     # TODO
@@ -74,15 +74,6 @@ class ApiController < ApplicationController
   end
 
   private
-
-  def authenticate
-    unless session[:user_id]
-      head 401
-      return false
-    end
-
-    set_current_user
-  end
 
   def versus_stats(matches)
     matches.map { |m| m.participations_for(@current_user) }

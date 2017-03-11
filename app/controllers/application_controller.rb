@@ -1,6 +1,6 @@
 class ApplicationController < ActionController::Base
 
-  before_action :check_user, only: :index
+  before_action :authenticate_web, only: :index
 
   def index
     @js_flags = {
@@ -11,20 +11,30 @@ class ApplicationController < ActionController::Base
     }
   end
 
-  def check_user
-    unless session[:user_id] && User.exists?(session[:user_id])
+  def authenticate_web
+    user = load_current_user
+
+    if user
+      @current_user = user
+    else
       redirect_to login_start_path
       return false
     end
-
-    set_current_user
   end
 
-  def set_current_user
-    @current_user = User.find(session[:user_id])
+  def authenticate_api
+    user = load_current_user
 
-    unless @current_user
-      raise "Internal Error"
+    if user
+      @current_user = user
+    else
+      head 401
+      return false
     end
+  end
+
+  def load_current_user
+    user_id = cookies.encrypted[:fifatum_data]
+    user_id ? User.find_by(id: user_id) : nil
   end
 end
