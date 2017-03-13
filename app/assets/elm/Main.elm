@@ -217,32 +217,27 @@ header model =
 
 body : Model -> List (Html Msg)
 body model =
-    [ grid []
-        [ cell [ size Tablet 6, size Desktop 12, size Phone 4 ]
-            (case model.pageModel of
-                NotFound ->
-                    [ div [] [ text "ooops" ] ]
+    case model.pageModel of
+        NotFound ->
+            [ div [] [ text "ooops" ] ]
 
-                VersusModel versusModel ->
-                    [ Html.map VersusMsg (Versus.view versusModel)
-                    , newMatchButton 0 model
-                    ]
+        VersusModel versusModel ->
+            [ Html.map VersusMsg (Versus.view versusModel)
+            , newMatchButton 0 model
+            ]
 
-                StatsModel statsModel ->
-                    [ Html.map StatsMsg (Stats.view statsModel)
-                    , newMatchButton 0 model
-                    ]
+        StatsModel statsModel ->
+            [ Html.map StatsMsg (Stats.view statsModel)
+            , newMatchButton 0 model
+            ]
 
-                RankingModel rankingModel ->
-                    [ Html.map RankingMsg (Ranking.view rankingModel)
-                    , newMatchButton 0 model
-                    ]
+        RankingModel rankingModel ->
+            [ Html.map RankingMsg (Ranking.view rankingModel)
+            , newMatchButton 0 model
+            ]
 
-                NewMatchModel newMatchModel ->
-                    [ Html.map NewMatchMsg (NewMatch.view newMatchModel) ]
-            )
-        ]
-    ]
+        NewMatchModel newMatchModel ->
+            [ Html.map NewMatchMsg (NewMatch.view newMatchModel) ]
 
 
 newMatchButton : Id -> Model -> Html Msg

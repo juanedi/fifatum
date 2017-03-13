@@ -412,27 +412,31 @@ initTeamSelectionWhenReady model =
 
 view : Model -> Html Msg
 view model =
-    case model.state of
-        Loading _ ->
-            Shared.loading
+    grid []
+        [ cell [ size Tablet 6, size Desktop 12, size Phone 4 ]
+            [ case model.state of
+                Loading _ ->
+                    Shared.loading
 
-        NoData msg ->
-            Shared.noData msg
+                NoData msg ->
+                    Shared.noData msg
 
-        TeamSelection state ->
-            div [ id "new-match" ] <|
-                teamSelectionView model state
+                TeamSelection state ->
+                    div [ id "new-match" ] <|
+                        teamSelectionView model state
 
-        ExpandedSelection state ->
-            div [ id "new-match" ] <|
-                expandedSelectionView model state
+                ExpandedSelection state ->
+                    div [ id "new-match" ] <|
+                        expandedSelectionView model state
 
-        Scoring state ->
-            div [ id "new-match" ] <|
-                scoringView model state
+                Scoring state ->
+                    div [ id "new-match" ] <|
+                        scoringView model state
 
-        Submitted ->
-            Shared.loading
+                Submitted ->
+                    Shared.loading
+            ]
+        ]
 
 
 teamSelectionView : Model -> TeamSelectionState -> List (Html Msg)

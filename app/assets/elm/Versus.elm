@@ -10,7 +10,9 @@ module Versus
 import Api exposing (User)
 import Html exposing (Html, div, span, text, p)
 import Html.Attributes exposing (id, class)
+import Html.Events as Events
 import Material
+import Material.Icon as Icon
 import Material.Options as Options exposing (cs, css)
 import Material.Table as Table
 import Return
@@ -104,27 +106,23 @@ versusView mdl user stats openDetail =
                         (rivalStatDialog mdl)
                         openDetail
                 , include <|
-                    Table.table [ Options.id "stats-table" ]
-                        [ Table.thead []
-                            [ Table.tr []
-                                [ Table.th [] [ text "Rival" ]
-                                , Table.th [ Table.numeric ] [ text "Balance" ]
-                                ]
-                            ]
-                        , Table.tbody
-                            []
-                            (stats
-                                |> List.sortBy (\stat -> stat.lost - stat.won)
-                                |> List.indexedMap
-                                    (\index stat ->
-                                        Table.tr []
-                                            [ Shared.clickableCell (onClick stat) [] [ text stat.rivalName ]
-                                            , Shared.clickableCell (onClick stat) [ Table.numeric ] [ text (balance stat) ]
-                                            ]
-                                    )
-                            )
-                        ]
+                    statsListing stats
                 ]
+
+
+statsListing : List Api.RivalStat -> Html Msg
+statsListing stats =
+    let
+        statRow stat =
+            Html.li
+                [ Events.onClick (OpenDetail stat) ]
+                [ span [ class "item-main" ] [ text stat.rivalName ]
+                , span [ class "balance-num" ] [ text (displayBalance stat) ]
+                , span [ class "icon" ] [ Icon.i (balanceIcon stat) ]
+                ]
+    in
+        Html.ul [ class "listing" ] <|
+            List.map statRow stats
 
 
 rivalStatDialog : Material.Model -> Api.RivalStat -> Html Msg
@@ -134,19 +132,34 @@ rivalStatDialog mdl stat =
         mdlIds.closeModal
         CloseDetail
         [ ( "Rival", stat.rivalName )
-        , ( "Balance", balance stat )
+        , ( "Balance", displayBalance stat )
         , ( "Record", (toString stat.won) ++ " victories - " ++ (toString stat.tied) ++ " tied - " ++ (toString stat.lost) ++ " lost" )
         , ( "Goals made", toString stat.goalsMade )
         , ( "Goals received", toString stat.goalsReceived )
         ]
 
 
-balance : Api.RivalStat -> String
+balance : Api.RivalStat -> Int
 balance stat =
-    if stat.won > stat.lost then
-        "+" ++ toString (stat.won - stat.lost)
+    stat.won - stat.lost
+
+
+balanceIcon : Api.RivalStat -> String
+balanceIcon stat =
+    if balance stat == 0 then
+        "trending_flat"
+    else if balance stat > 1 then
+        "trending_up"
     else
-        toString (stat.won - stat.lost)
+        "trending_down"
+
+
+displayBalance : Api.RivalStat -> String
+displayBalance stat =
+    if stat.won > stat.lost then
+        "+" ++ toString (balance stat)
+    else
+        toString (balance stat)
 
 
 mdlIds =
