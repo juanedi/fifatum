@@ -43,6 +43,7 @@ loading =
                 , ( "transform", "translateY(-50%)" )
                 , ( "max-width", "500px" )
                 , ( "margin", "auto" )
+                , ( "padding", "0 20px" )
                 ]
             ]
             [ Progress.indeterminate

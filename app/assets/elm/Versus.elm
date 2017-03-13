@@ -14,7 +14,6 @@ import Html.Events as Events
 import Material
 import Material.Icon as Icon
 import Material.Options as Options exposing (cs, css)
-import Material.Table as Table
 import Return
 import SelectList exposing (include, maybe)
 import Shared

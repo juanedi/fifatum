@@ -13,7 +13,6 @@ import Html.Attributes exposing (id, class, style)
 import Html.Events as Events
 import Material
 import Material.Options as Options exposing (cs, css)
-import Material.Table as Table
 import Return
 import SelectList exposing (include, maybe)
 import Shared
@@ -94,19 +93,15 @@ view model =
 
 recentMatchesView : Material.Model -> User -> List Api.Match -> Maybe Api.Match -> Html Msg
 recentMatchesView mdl user recentMatches openDetail =
-    let
-        matchCell match options content =
-            Shared.clickableCell (MLoaded <| OpenDetail match) options content
-    in
-        div [ id "stats" ] <|
-            SelectList.select
-                [ maybe <|
-                    Maybe.map
-                        (matchDetailDialog mdl user)
-                        openDetail
-                , include <|
-                    matchesListing user recentMatches
-                ]
+    div [ id "stats" ] <|
+        SelectList.select
+            [ maybe <|
+                Maybe.map
+                    (matchDetailDialog mdl user)
+                    openDetail
+            , include <|
+                matchesListing user recentMatches
+            ]
 
 
 matchesListing : User -> List Api.Match -> Html Msg
