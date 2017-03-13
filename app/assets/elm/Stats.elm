@@ -9,7 +9,8 @@ module Stats
 
 import Api exposing (User)
 import Html exposing (Html, div, span, text, p)
-import Html.Attributes exposing (id, class)
+import Html.Attributes exposing (id, class, style)
+import Html.Events as Events
 import Material
 import Material.Options as Options exposing (cs, css)
 import Material.Table as Table
@@ -104,28 +105,25 @@ recentMatchesView mdl user recentMatches openDetail =
                         (matchDetailDialog mdl user)
                         openDetail
                 , include <|
-                    Table.table [ Options.id "stats-table" ]
-                        [ Table.thead []
-                            [ Table.tr []
-                                [ Table.th [] [ text "Date" ]
-                                , Table.th [] [ text "Rival" ]
-                                , Table.th [ Table.numeric ] [ text "Result" ]
-                                ]
-                            ]
-                        , Table.tbody []
-                            (recentMatches
-                                |> List.indexedMap
-                                    (\index match ->
-                                        Table.tr
-                                            []
-                                            [ matchCell match [] [ text (dateString match.date) ]
-                                            , matchCell match [] [ text (rivalName user match) ]
-                                            , matchCell match [ Table.numeric ] [ text (score user match) ]
-                                            ]
-                                    )
-                            )
-                        ]
+                    matchesListing user recentMatches
                 ]
+
+
+matchesListing : User -> List Api.Match -> Html Msg
+matchesListing user matches =
+    let
+        matchRow match =
+            Html.li
+                [ Events.onClick (MLoaded <| OpenDetail match) ]
+                [ span [ class "item-main" ]
+                    [ div [] [ text (rivalName user match) ]
+                    , span [ class "item-sub" ] [ text (dateString match.date) ]
+                    ]
+                , span [ class "icon", style [ ( "min-width", "47px" ) ] ] [ text (score user match) ]
+                ]
+    in
+        Html.ul [ class "listing" ] <|
+            List.map matchRow matches
 
 
 matchDetailDialog : Material.Model -> User -> Api.Match -> Html Msg

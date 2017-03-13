@@ -95,19 +95,15 @@ view model =
 
 versusView : Material.Model -> User -> List Api.RivalStat -> Maybe Api.RivalStat -> Html Msg
 versusView mdl user stats openDetail =
-    let
-        onClick stat =
-            OpenDetail stat
-    in
-        div [ id "stats" ] <|
-            SelectList.select
-                [ maybe <|
-                    Maybe.map
-                        (rivalStatDialog mdl)
-                        openDetail
-                , include <|
-                    statsListing stats
-                ]
+    div [ id "stats" ] <|
+        SelectList.select
+            [ maybe <|
+                Maybe.map
+                    (rivalStatDialog mdl)
+                    openDetail
+            , include <|
+                statsListing stats
+            ]
 
 
 statsListing : List Api.RivalStat -> Html Msg

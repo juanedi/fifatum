@@ -92,8 +92,8 @@ modalDialog mdl mdlTagger closeButtonId closeMsg fields =
                 , span [ class "value" ] [ text value ]
                 ]
     in
-        div [ class "match-detail-dialog-container" ]
-            [ div [ class "match-detail-dialog" ]
+        div [ class "modal-dialog-container" ]
+            [ div [ class "modal-dialog" ]
                 [ div [ class "content" ] <|
                     List.map (uncurry field) fields
                 , div [ class "actions" ]
