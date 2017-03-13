@@ -102,7 +102,7 @@ versusView mdl user stats openDetail =
                     (rivalStatDialog mdl)
                     openDetail
             , include <|
-                statsListing stats
+                statsListing (List.sortBy (\stat -> (-1) * balance stat) stats)
             ]
 
 
