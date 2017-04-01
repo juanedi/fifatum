@@ -131,9 +131,14 @@ update msg model =
                             |> Return.mapCmd RankingMsg
 
                     ( VersusModel pModel, VersusMsg pMsg ) ->
-                        Versus.update pMsg pModel
-                            |> Return.map (setPageModel VersusModel)
-                            |> Return.mapCmd VersusMsg
+                        case pMsg of
+                            Versus.Event Versus.NewMatch ->
+                                ( model, Routing.navigate NewMatchRoute )
+
+                            _ ->
+                                Versus.update pMsg pModel
+                                    |> Return.map (setPageModel VersusModel)
+                                    |> Return.mapCmd VersusMsg
 
                     ( StatsModel pModel, StatsMsg pMsg ) ->
                         Stats.update pMsg pModel
@@ -142,7 +147,7 @@ update msg model =
 
                     ( NewMatchModel pModel, NewMatchMsg pMsg ) ->
                         case pMsg of
-                            NewMatch.Event (NewMatch.MatchReportOk) ->
+                            NewMatch.Event NewMatch.MatchReportOk ->
                                 Return.singleton model
                                     |> Return.command (Routing.navigateToRoot)
 
@@ -223,31 +228,22 @@ body model =
 
         VersusModel versusModel ->
             [ Html.map VersusMsg (Versus.view versusModel)
-            , newMatchButton 0 model
             ]
 
         StatsModel statsModel ->
             [ Html.map StatsMsg (Stats.view statsModel)
-            , newMatchButton 0 model
+            , newMatchButton model.mdl
             ]
 
         RankingModel rankingModel ->
             [ Html.map RankingMsg (Ranking.view rankingModel)
-            , newMatchButton 0 model
+            , newMatchButton model.mdl
             ]
 
         NewMatchModel newMatchModel ->
             [ Html.map NewMatchMsg (NewMatch.view newMatchModel) ]
 
 
-newMatchButton : Id -> Model -> Html Msg
-newMatchButton id model =
-    Button.render Mdl
-        [ id ]
-        model.mdl
-        [ Button.fab
-        , Button.colored
-        , Options.onClick (Navigate Routing.NewMatchRoute)
-        , Options.cs "corner-btn"
-        ]
-        [ Icon.i "add" ]
+newMatchButton : Material.Model -> Html Msg
+newMatchButton mdl =
+    Shared.newMatchButton 0 mdl Mdl (Navigate Routing.NewMatchRoute)

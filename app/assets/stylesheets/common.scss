@@ -35,3 +35,19 @@
     transform: translateY(-50% );
   }
 }
+
+.actions {
+  text-align: center;
+  margin-top: 40px;
+
+  .main-action-btn {
+    width: 70%;
+  }
+
+  .action-btn {
+    &:not(:last-child) {
+      margin-right: 15px;
+    }
+    width: 45%;
+  }
+}

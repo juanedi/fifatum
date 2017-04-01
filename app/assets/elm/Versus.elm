@@ -1,7 +1,8 @@
 module Versus
     exposing
         ( Model
-        , Msg
+        , Msg(Event)
+        , VersusEvent(..)
         , init
         , update
         , view
@@ -12,6 +13,7 @@ import Html exposing (Html, div, span, text, p)
 import Html.Attributes exposing (id, class)
 import Html.Events as Events
 import Material
+import Material.Button as Button
 import Material.Icon as Icon
 import Material.Options as Options exposing (cs, css)
 import Return
@@ -33,10 +35,15 @@ type alias Model =
 
 type Msg
     = Mdl (Material.Msg Msg)
+    | Event VersusEvent
     | FetchOk Api.Stats
     | FetchFailed
     | OpenDetail Api.RivalStat
     | CloseDetail
+
+
+type VersusEvent
+    = NewMatch
 
 
 init : User -> ( Model, Cmd Msg )
@@ -89,19 +96,53 @@ view model =
                 -- TODO
                 Shared.noData "You haven't played any matches yet"
             else
-                versusView model.mdl model.user stats.versus openDetail
+                case openDetail of
+                    Nothing ->
+                        versusView model.mdl model.user stats.versus
+
+                    Just rivalStat ->
+                        detailView model.mdl rivalStat
 
 
-versusView : Material.Model -> User -> List Api.RivalStat -> Maybe Api.RivalStat -> Html Msg
-versusView mdl user stats openDetail =
-    div [ id "stats" ] <|
-        SelectList.select
-            [ maybe <|
-                Maybe.map
-                    (rivalStatDialog mdl)
-                    openDetail
-            , include <|
-                statsListing (List.sortBy (\stat -> (-1) * balance stat) stats)
+versusView : Material.Model -> User -> List Api.RivalStat -> Html Msg
+versusView mdl user stats =
+    div []
+        [ div [ id "stats" ] <|
+            [ statsListing (List.sortBy (\stat -> (-1) * balance stat) stats) ]
+        , newMatchButton mdl
+        ]
+
+
+detailView : Material.Model -> Api.RivalStat -> Html Msg
+detailView mdl stat =
+    let
+        fields =
+            [ ( "Balance", displayBalance stat )
+            , ( "Matches", toString (stat.won + stat.tied + stat.lost) )
+            , ( "Record", (toString stat.won) ++ " victories - " ++ (toString stat.tied) ++ " tied - " ++ (toString stat.lost) ++ " lost" )
+            , ( "Goals made", toString stat.goalsMade )
+            , ( "Goals received", toString stat.goalsReceived )
+            ]
+
+        renderField ( name, value ) =
+            Html.li
+                []
+                [ span [ class "name" ] [ text name ]
+                , span [ class "value" ] [ text value ]
+                ]
+    in
+        div [ class "rival-stat-detail" ]
+            [ Html.h1 [] [ text stat.rivalName ]
+            , Html.ul
+                [ class "rival-stat-fields" ]
+                (List.map renderField fields)
+            , div [ class "actions" ]
+                [ Button.render Mdl
+                    [ mdlIds.closeModal ]
+                    mdl
+                    [ Options.onClick CloseDetail, Button.colored, Button.raised, Options.cs "main-action-btn" ]
+                    [ text "Close" ]
+                ]
             ]
 
 
@@ -118,20 +159,6 @@ statsListing stats =
     in
         Html.ul [ class "listing" ] <|
             List.map statRow stats
-
-
-rivalStatDialog : Material.Model -> Api.RivalStat -> Html Msg
-rivalStatDialog mdl stat =
-    Shared.modalDialog mdl
-        Mdl
-        mdlIds.closeModal
-        CloseDetail
-        [ ( "Rival", stat.rivalName )
-        , ( "Balance", displayBalance stat )
-        , ( "Record", (toString stat.won) ++ " victories - " ++ (toString stat.tied) ++ " tied - " ++ (toString stat.lost) ++ " lost" )
-        , ( "Goals made", toString stat.goalsMade )
-        , ( "Goals received", toString stat.goalsReceived )
-        ]
 
 
 balance : Api.RivalStat -> Int
@@ -157,7 +184,13 @@ displayBalance stat =
         toString (balance stat)
 
 
+newMatchButton : Material.Model -> Html Msg
+newMatchButton mdl =
+    Shared.newMatchButton mdlIds.newMatch mdl Mdl (Event NewMatch)
+
+
 mdlIds =
     { menu = 1
     , closeModal = 2
+    , newMatch = 3
     }

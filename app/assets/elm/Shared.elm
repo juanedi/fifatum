@@ -6,6 +6,7 @@ module Shared
         , noData
         , clickableCell
         , modalDialog
+        , newMatchButton
         )
 
 import Html exposing (Html, div, span, text, p)
@@ -14,6 +15,7 @@ import Html.Events as Events
 import Json.Decode
 import Material
 import Material.Button as Button
+import Material.Icon as Icon
 import Material.Layout as Layout
 import Material.Options as Options exposing (cs, css)
 import Material.Progress as Progress
@@ -101,3 +103,16 @@ modalDialog mdl mdlTagger closeButtonId closeMsg fields =
                     [ modalCloseButton ]
                 ]
             ]
+
+
+newMatchButton : Int -> Material.Model -> (Material.Msg msg -> msg) -> msg -> Html msg
+newMatchButton id mdl mdlWrapper msg =
+    Button.render mdlWrapper
+        [ id ]
+        mdl
+        [ Button.fab
+        , Button.colored
+        , Options.onClick msg
+        , Options.cs "corner-btn"
+        ]
+        [ Icon.i "add" ]

@@ -30,22 +30,6 @@
     margin-bottom: 20px;
   }
 
-  .actions {
-    text-align: center;
-    margin-top: 40px;
-
-    .main-action-btn {
-      width: 70%;
-    }
-
-    .action-btn {
-      &:not(:last-child) {
-        margin-right: 15px;
-      }
-      width: 45%;
-    }
-  }
-
   .score-column {
     .name {
       font-size: 15px;

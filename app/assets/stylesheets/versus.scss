@@ -1,0 +1,28 @@
+.rival-stat-detail {
+  color: #757575;
+  padding: 5px 10px;
+
+  h1 {
+    font-size: 25px;
+  }
+
+  .rival-stat-fields {
+    list-style: none;
+    padding: 10px 0;
+
+    li {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+
+      .name {
+        font-size: 12px;
+        flex-grow: 1;
+      }
+
+      .value {
+        font-size: 18px;
+      }
+    }
+  }
+}
