@@ -8,8 +8,15 @@ class Match < ActiveRecord::Base
 
   def self.of_user(user)
     Match.where("user1_id = ? OR user2_id = ?", user.id, user.id)
+      .includes(:user1).includes(:team1)
+      .includes(:user2).includes(:team2)
+  end
+
+  def self.between(user1_id, user2_id)
+    Match.where("(user1_id = ? AND user2_id = ?) OR (user1_id = ? and user2_id = ?)", user1_id, user2_id, user2_id, user1_id)
          .includes(:user1).includes(:team1)
          .includes(:user2).includes(:team2)
+         .order(created_at: :asc)
   end
 
   def self.last_of(user)
@@ -44,6 +51,7 @@ class Match < ActiveRecord::Base
       "team" => { "id" => team1.id, "name" => team1.name },
       "goals" => user1_goals
     }
+
     p2 = {
       "id" => user2.id,
       "name" => user2.name,

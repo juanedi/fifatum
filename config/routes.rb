@@ -12,6 +12,7 @@ Rails.application.routes.draw do
     get 'users/:id/recent_teams', to: 'api#recent_teams'
     get 'ranking', to: 'api#ranking'
     get 'stats', to: 'api#stats'
+    get 'versus/:rival_id', to: 'api#versus_detail'
     get 'leagues', to: 'api#leagues'
     get 'leagues/:id/teams', to: 'api#league_teams'
     post 'matches', to: 'api#report_match'

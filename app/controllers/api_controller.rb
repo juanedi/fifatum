@@ -73,6 +73,33 @@ class ApiController < ApplicationController
     return head 204
   end
 
+  def versus_detail
+    matches = Match.between(@current_user.id, params[:rival_id])
+
+    balance = 0
+    balance_history = []
+
+    matches.each do |match|
+      date = match.created_at.clone.change(hour: 0, min: 0, sec: 0, usec: 0).to_i
+      entry = balance_history.last
+
+      if entry.nil? || entry[:date] != date
+        entry = { date: date, balance: 0 }
+        balance_history << entry
+      end
+
+      participations = match.participations_for(@current_user)
+      own_goals = participations["own"]["goals"]
+      rival_goals = participations["rival"]["goals"]
+
+      balance += (own_goals <=> rival_goals)
+
+      entry[:balance] = balance
+    end
+
+    render json: { "balanceHistory" => balance_history }
+  end
+
   private
 
   def versus_stats(matches)
@@ -103,6 +130,7 @@ class ApiController < ApplicationController
       end
 
       {
+        "rivalId" => rival_matches.first["rival"]["id"],
         "rivalName" => rival_matches.first["rival"]["name"],
         "won" => won,
         "tied" => tied,

@@ -138,6 +138,7 @@ RSpec.describe ApiController do
 
           expect(json_response["versus"]).to eq([
                                                   {
+                                                    "rivalId" => other_user.id,
                                                     "rivalName" => other_user.name,
                                                     "won" => 1,
                                                     "tied" => 1,
@@ -146,6 +147,7 @@ RSpec.describe ApiController do
                                                     "goalsReceived" => 2,
                                                   },
                                                   {
+                                                    "rivalId" => yet_another_user.id,
                                                     "rivalName" => yet_another_user.name,
                                                     "won" => 0,
                                                     "tied" => 0,
@@ -154,6 +156,47 @@ RSpec.describe ApiController do
                                                     "goalsReceived" => 2,
                                                   },
                                                 ])
+        end
+
+        it "provides daily history against a particular rival" do
+          Match.create!(
+            created_at: "2010-01-01 12:00:00",
+            user1_id: current_user.id, user1_team_id: t1.id, user1_goals: 3,
+            user2_id: other_user.id, user2_team_id: t2.id, user2_goals: 1,
+          )
+
+          Match.create!(
+            created_at: "2010-01-02 12:00:00",
+            user1_id: current_user.id, user1_team_id: t1.id, user1_goals: 0,
+            user2_id: other_user.id, user2_team_id: t2.id, user2_goals: 1
+          )
+
+          Match.create!(
+            created_at: "2010-01-02 13:00:00",
+            user1_id: current_user.id, user1_team_id: t1.id, user1_goals: 2,
+            user2_id: other_user.id, user2_team_id: t2.id, user2_goals: 3
+          )
+
+          Match.create!(
+            created_at: "2010-01-03 12:00:00",
+            user2_id: current_user.id, user2_team_id: t2.id, user2_goals: 3,
+            user1_id: other_user.id, user1_team_id: t1.id, user1_goals: 0
+          )
+
+          get :versus_detail, params: {rival_id: other_user.id}
+
+          balance_history = json_response["balanceHistory"]
+
+          expect(balance_history.size).to eq(3)
+
+          expect(balance_history[0]['date']).not_to be_nil
+          expect(balance_history[0]['balance']).to eq(1)
+
+          expect(balance_history[1]['date']).not_to be_nil
+          expect(balance_history[1]['balance']).to eq(-1)
+
+          expect(balance_history[2]['date']).not_to be_nil
+          expect(balance_history[2]['balance']).to eq(0)
         end
       end
     end
