@@ -32,7 +32,10 @@ RSpec.describe ApiController do
   context "user is authenticated" do
 
     before(:each) do
-      @request.session[:user_id] = current_user.id
+      # see https://github.com/rails/rails/issues/27145
+      allow(controller).to receive(:cookies).and_return(cookies)
+
+      cookies.encrypted[:fifatum_data] = current_user.id
     end
 
     it "provides access tu the current ranking" do
@@ -115,7 +118,7 @@ RSpec.describe ApiController do
       end
 
       describe "versus" do
-        it "foo" do
+        it "returns a summary of history against each rival" do
           Match.create!(
             user1_id: current_user.id, user1_team_id: t1.id, user1_goals: 3,
             user2_id: other_user.id, user2_team_id: t2.id, user2_goals: 1
