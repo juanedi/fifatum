@@ -9,6 +9,7 @@ module Versus
         )
 
 import Api exposing (User)
+import Charty.LineChart
 import Html exposing (Html, div, span, text, p)
 import Html.Attributes exposing (id, class)
 import Html.Events as Events
@@ -17,13 +18,14 @@ import Material.Button as Button
 import Material.Icon as Icon
 import Material.Options as Options exposing (cs, css)
 import Return
-import SelectList exposing (include, maybe)
 import Shared
 
 
 type State
     = Loading
-    | Loaded { stats : Api.Stats, openDetail : Maybe Api.RivalStat }
+    | Listing Api.Stats
+    | DetailLoading Api.Stats Api.RivalStat
+    | Detail Api.Stats Api.RivalStat Api.VersusDetail
 
 
 type alias Model =
@@ -39,6 +41,7 @@ type Msg
     | FetchOk Api.Stats
     | FetchFailed
     | OpenDetail Api.RivalStat
+    | DetailFetchOk Api.VersusDetail
     | CloseDetail
 
 
@@ -64,7 +67,7 @@ update msg model =
 
         ( Loading, FetchOk stats ) ->
             Return.singleton <|
-                { model | state = Loaded { stats = stats, openDetail = Nothing } }
+                { model | state = Listing stats }
 
         ( Loading, FetchFailed ) ->
             -- TODO
@@ -73,16 +76,28 @@ update msg model =
         ( Loading, _ ) ->
             Debug.crash "Invalid state"
 
-        ( Loaded state, msg ) ->
-            case msg of
-                OpenDetail stat ->
-                    Return.singleton { model | state = Loaded { state | openDetail = Just stat } }
+        ( Listing stats, OpenDetail stat ) ->
+            Return.singleton { model | state = DetailLoading stats stat }
+                |> Return.command (Api.fetchVersusDetail stat.rivalId (always FetchFailed) DetailFetchOk)
 
-                CloseDetail ->
-                    Return.singleton { model | state = Loaded { state | openDetail = Nothing } }
+        ( Listing stats, _ ) ->
+            Debug.crash "Invalid state"
 
-                _ ->
-                    Debug.crash "Invalid state"
+        ( DetailLoading stats stat, DetailFetchOk detail ) ->
+            Return.singleton { model | state = Detail stats stat detail }
+
+        ( DetailLoading stats stat, FetchFailed ) ->
+            -- TODO
+            Return.singleton model
+
+        ( DetailLoading stats stat, _ ) ->
+            Debug.crash "Invalid state"
+
+        ( Detail stats _ _, CloseDetail ) ->
+            Return.singleton { model | state = Listing stats }
+
+        ( Detail _ _ _, _ ) ->
+            Debug.crash "Invalid state"
 
 
 view : Model -> Html Msg
@@ -91,17 +106,18 @@ view model =
         Loading ->
             Shared.loading
 
-        Loaded { stats, openDetail } ->
+        Listing stats ->
             if List.isEmpty stats.recentMatches then
                 -- TODO
                 Shared.noData "You haven't played any matches yet"
             else
-                case openDetail of
-                    Nothing ->
-                        versusView model.mdl model.user stats.versus
+                versusView model.mdl model.user stats.versus
 
-                    Just rivalStat ->
-                        detailView model.mdl rivalStat
+        DetailLoading _ _ ->
+            Shared.loading
+
+        Detail stats stat detail ->
+            detailView model.mdl stat detail
 
 
 versusView : Material.Model -> User -> List Api.RivalStat -> Html Msg
@@ -113,9 +129,22 @@ versusView mdl user stats =
         ]
 
 
-detailView : Material.Model -> Api.RivalStat -> Html Msg
-detailView mdl stat =
+chartConfig =
+    { drawPoints = True
+    , background = "#FFFFFF"
+    , colorAssignment = List.map (\series -> ( "#000000", series ))
+    , labelPrecision = 0
+    }
+
+
+detailView : Material.Model -> Api.RivalStat -> Api.VersusDetail -> Html Msg
+detailView mdl stat detail =
     let
+        chartData =
+            List.map
+                (\{ timestamp, balance } -> ( toFloat timestamp, toFloat balance ))
+                detail.balanceHistory
+
         fields =
             [ ( "Balance", displayBalance stat )
             , ( "Matches", toString (stat.won + stat.tied + stat.lost) )
@@ -133,6 +162,9 @@ detailView mdl stat =
     in
         div [ class "rival-stat-detail" ]
             [ Html.h1 [] [ text stat.rivalName ]
+            , Html.div
+                [ class "rival-stat-chart" ]
+                [ Charty.LineChart.view chartConfig [ chartData ] ]
             , Html.ul
                 [ class "rival-stat-fields" ]
                 (List.map renderField fields)

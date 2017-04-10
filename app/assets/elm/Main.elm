@@ -3,9 +3,6 @@ module Main exposing (..)
 import Api
 import Html exposing (Html, div, text)
 import Material
-import Material.Button as Button
-import Material.Grid exposing (grid, cell, size, Device(..))
-import Material.Icon as Icon
 import Material.Layout as Layout
 import Material.Options as Options exposing (css)
 import Navigation exposing (Location)

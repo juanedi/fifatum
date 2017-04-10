@@ -16,6 +16,8 @@ module Api
         , fetchRecentTeams
         , fetchTeams
         , reportMatch
+        , VersusDetail
+        , fetchVersusDetail
         )
 
 import Date exposing (Date)
@@ -85,7 +87,8 @@ type alias Stats =
 
 
 type alias RivalStat =
-    { rivalName : String
+    { rivalId : Int
+    , rivalName : String
     , won : Int
     , tied : Int
     , lost : Int
@@ -97,6 +100,17 @@ type alias RivalStat =
 type alias UsersResponse =
     { users : List User
     , lastRivalId : Maybe Int
+    }
+
+
+type alias VersusDetail =
+    { balanceHistory : List HistoricalBalanceEntry
+    }
+
+
+type alias HistoricalBalanceEntry =
+    { timestamp : Int
+    , balance : Int
     }
 
 
@@ -147,6 +161,16 @@ fetchTeams errorTagger okTagger league =
             ("/api/leagues/" ++ (toString league.id) ++ "/teams")
     in
         Http.get url (list teamDecoder)
+            |> send errorTagger okTagger
+
+
+fetchVersusDetail : Int -> (Http.Error -> msg) -> (VersusDetail -> msg) -> Cmd msg
+fetchVersusDetail rivalId errorTagger okTagger =
+    let
+        url =
+            "/api/versus/" ++ (toString rivalId)
+    in
+        Http.get url versusDetailDecoder
             |> send errorTagger okTagger
 
 
@@ -204,7 +228,8 @@ statsDecoder =
         (field "recentMatches" (list matchDecoder))
         (field "versus" <|
             list <|
-                Decode.map6 RivalStat
+                Decode.map7 RivalStat
+                    (field "rivalId" int)
                     (field "rivalName" string)
                     (field "won" int)
                     (field "tied" int)
@@ -244,3 +269,15 @@ teamDecoder =
     Decode.map2 Team
         (field "id" int)
         (field "name" string)
+
+
+versusDetailDecoder : Decode.Decoder VersusDetail
+versusDetailDecoder =
+    let
+        balanceEntryDecoder =
+            Decode.map2 HistoricalBalanceEntry
+                (field "date" int)
+                (field "balance" int)
+    in
+        Decode.map VersusDetail
+            (field "balanceHistory" (list balanceEntryDecoder))
