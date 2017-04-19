@@ -131,7 +131,8 @@ versusView mdl user stats =
 
 chartConfig =
     { drawPoints = True
-    , background = "#FFFFFF"
+    , drawLabels = False
+    , background = "transparent"
     , colorAssignment = List.map (\series -> ( "#000000", series ))
     , labelPrecision = 0
     }
@@ -164,7 +165,7 @@ detailView mdl stat detail =
             [ Html.h1 [] [ text stat.rivalName ]
             , Html.div
                 [ class "rival-stat-chart" ]
-                [ Charty.LineChart.view chartConfig [ chartData ] ]
+                [ Charty.LineChart.view chartConfig [ { label = "Balance", data = chartData } ] ]
             , Html.ul
                 [ class "rival-stat-fields" ]
                 (List.map renderField fields)
