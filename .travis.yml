@@ -1,2 +1,11 @@
 language: ruby
+
+services:
+  - postgresql
+
+before_script:
+  - psql -c "create user fifatum with password 'fifatum';" -U postgres
+  - psql -c "alter user fifatum createdb" -U postgres
+  - createdb -U fifatum --owner fifatum fifatum_test
+
 script: bundle exec rspec spec
