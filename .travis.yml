@@ -1,11 +1,25 @@
 language: ruby
 
+node_js: "6"
+
+cache:
+  directories:
+    - elm-stuff/build-artifacts
+    - sysconfcpus
+
 services:
   - postgresql
+
+before_install:
+  - bash ./travis/install-libsysconfcpus.sh
+  - npm install elm@0.18.0
+  - elm-package install --yes
 
 before_script:
   - psql -c "create user fifatum with password 'fifatum';" -U postgres
   - psql -c "alter user fifatum createdb" -U postgres
   - createdb -U fifatum --owner fifatum fifatum_test
 
-script: bundle exec rspec spec
+script:
+  - bundle exec rspec spec
+  - ./travis/elm-make-fast app/assets/elm/Main.elm --output /dev/null --yes
