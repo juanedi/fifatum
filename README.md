@@ -1,5 +1,8 @@
 # Fifatum
 
+[![Build Status](https://travis-ci.org/juanedi/fifatum.svg?branch=master)](https://travis-ci.org/juanedi/fifatum)
+---
+
 ## Development environment setup
 
 ### Elm
