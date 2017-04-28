@@ -2,6 +2,7 @@ module Main exposing (..)
 
 import Api
 import Html exposing (Html, div, text)
+import I18n exposing (..)
 import Material
 import Material.Layout as Layout
 import Material.Options as Options exposing (css)
@@ -189,11 +190,11 @@ drawer model =
     in
         [ Layout.title [] [ text model.user.name ]
         , Layout.navigation []
-            [ menuLink "Rivals" VersusRoute
-            , menuLink "Matches" StatsRoute
-            , menuLink "Ranking" RankingRoute
+            [ menuLink (t MenuRivals) VersusRoute
+            , menuLink (t MenuMatches) StatsRoute
+            , menuLink (t MenuRanking) RankingRoute
             , Html.hr [] []
-            , Layout.link [ Layout.href "/logout" ] [ text "Logout" ]
+            , Layout.link [ Layout.href "/logout" ] [ text (t MenuLogout) ]
             ]
         ]
 
@@ -205,16 +206,16 @@ header model =
             []
 
         VersusModel versusModel ->
-            Shared.titleHeader "Rivals"
+            Shared.titleHeader (t MenuRivals)
 
         StatsModel statsModel ->
-            Shared.titleHeader "Matches"
+            Shared.titleHeader (t MenuMatches)
 
         RankingModel rankingModel ->
-            Shared.titleHeader "Ranking"
+            Shared.titleHeader (t MenuRanking)
 
         NewMatchModel newMatchModel ->
-            Shared.titleHeader "Friendly match"
+            Shared.titleHeader (t MenuFriendlyMatch)
 
 
 body : Model -> List (Html Msg)

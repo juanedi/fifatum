@@ -12,6 +12,7 @@ import Api exposing (User, League, Team)
 import Html
 import Html exposing (Html, div, text, label, select)
 import Html.Attributes exposing (for, id, style, value, selected, disabled, class)
+import I18n exposing (..)
 import Material
 import Material.Button as Button
 import Material.Grid exposing (grid, cell, size, Device(..))
@@ -220,13 +221,13 @@ updateLoading model state msg =
                             |> List.sortBy (rivalSortCriteria lastRivalId)
                 in
                     if List.isEmpty otherUsers then
-                        { model | state = NoData "There are no rivals to play against." }
+                        { model | state = NoData (t NewMatchNoRivals) }
                     else
                         { model | state = Loading { state | otherUsers = Just otherUsers } }
 
             FetchedLeagues leagues ->
                 if List.isEmpty leagues then
-                    { model | state = NoData "There are no teams." }
+                    { model | state = NoData (t NewMatchNoTeams) }
                 else
                     { model | state = Loading { state | leagues = Just (List.sortBy .name leagues) } }
 
@@ -454,7 +455,7 @@ teamSelectionView model state =
                         , Options.onClick
                             (MTeamSelection (ExpandSelection target))
                         ]
-                        [ text "Select" ]
+                        [ text (t UISelect) ]
             in
                 case recentTeams of
                     Nothing ->
@@ -478,7 +479,7 @@ teamSelectionView model state =
                             otherComboOption =
                                 Html.option
                                     [ value "0", selected False ]
-                                    [ text "Other" ]
+                                    [ text (t UIOther) ]
 
                             onSelect id =
                                 List.filter (\t -> t.id == id) teams
@@ -491,11 +492,11 @@ teamSelectionView model state =
                                     ++ [ otherComboOption ]
     in
         [ div [ style [ ( "flex-grow", "1" ) ] ]
-            [ label [ for "select-team1" ] [ text "Your Team" ]
+            [ label [ for "select-team1" ] [ text (t NewMatchYourTeam) ]
             , teamSelect Own state.ownTeam mdlIds.teamSelection1 "select-team1" (Just state.ownRecentTeams)
             ]
         , div [ style [ ( "flex-grow", "1" ) ] ]
-            [ label [ for "select-rival" ] [ text "Rival" ]
+            [ label [ for "select-rival" ] [ text (t NewMatchRivalTeam) ]
             , Html.select [ id "select-rival", Shared.onSelect (MTeamSelection << RivalChanged) ] <|
                 List.map
                     (\user ->
@@ -517,7 +518,7 @@ teamSelectionView model state =
                         _ ->
                             [ Button.disabled ]
               in
-                mainActionButton model.mdl mdlIds.teamSelectionDone "Next" attributes
+                mainActionButton model.mdl mdlIds.teamSelectionDone (t UINext) attributes
             ]
         ]
 
@@ -580,16 +581,16 @@ expandedSelectionView model state =
                     (Maybe.withDefault [] state.teams)
     in
         [ div [ style [ ( "flex-grow", "1" ) ] ]
-            [ label [ for "select-league" ] [ text "League" ]
+            [ label [ for "select-league" ] [ text (t LangLeague) ]
             , leagueSelect
             ]
         , div [ style [ ( "flex-grow", "1" ) ] ]
-            [ label [ for "team" ] [ text "Team" ]
+            [ label [ for "team" ] [ text (t LangTeam) ]
             , teamSelect
             ]
         , div
             [ class "actions" ]
-            [ mainActionButton model.mdl mdlIds.expandedSelectionDone "Done" [ Options.onClick (MExpandedSelection Done) ] ]
+            [ mainActionButton model.mdl mdlIds.expandedSelectionDone (t UIDone) [ Options.onClick (MExpandedSelection Done) ] ]
         ]
 
 
@@ -621,7 +622,7 @@ scoringView model state =
                         , Button.raised
                         , Options.cs "goal-btn"
                         ]
-                        [ text "Goal" ]
+                        [ text (t LangGoal) ]
             in
                 grid []
                     [ halfWidthColumn
@@ -643,7 +644,7 @@ scoringView model state =
                 , Button.raised
                 , Options.cs "action-btn"
                 ]
-                [ text "Reset" ]
+                [ text (t NewMatchReset) ]
 
         reportButton =
             Button.render Mdl
@@ -654,7 +655,7 @@ scoringView model state =
                 , Button.raised
                 , Options.cs "action-btn"
                 ]
-                [ text "Report" ]
+                [ text (t NewMatchReport) ]
     in
         [ div [ style [ ( "flex-grow", "1" ) ] ]
             [ teamDisplay Own ]
@@ -668,12 +669,12 @@ scoringView model state =
         ]
 
 
-mainActionButton mdl mdlId t attrs =
+mainActionButton mdl mdlId label attrs =
     Button.render Mdl
         [ mdlId ]
         mdl
         (attrs ++ [ Button.colored, Button.raised, Options.cs "main-action-btn" ])
-        [ text t ]
+        [ text label ]
 
 
 mdlIds =

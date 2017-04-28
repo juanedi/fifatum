@@ -12,6 +12,7 @@ module Shared
 import Html exposing (Html, div, span, text, p)
 import Html.Attributes exposing (id, class)
 import Html.Events as Events
+import I18n exposing (..)
 import Json.Decode
 import Material
 import Material.Button as Button
@@ -87,7 +88,7 @@ modalDialog mdl mdlTagger closeButtonId closeMsg fields =
                 [ closeButtonId ]
                 mdl
                 [ Options.onClick closeMsg ]
-                [ text "Close" ]
+                [ text (t UIClose) ]
 
         field name value =
             div [ class "field" ]

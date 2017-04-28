@@ -11,6 +11,7 @@ import Api exposing (User)
 import Html exposing (Html, div, span, text, p)
 import Html.Attributes exposing (id, class, style)
 import Html.Events as Events
+import I18n exposing (..)
 import Material
 import Material.Options as Options exposing (cs, css)
 import Return
@@ -86,7 +87,7 @@ view model =
 
         Loaded { stats, openDetail } ->
             if List.isEmpty stats.recentMatches then
-                Shared.noData "You haven't played any matches yet"
+                Shared.noData (t StatsNoMatches)
             else
                 recentMatchesView model.mdl model.user stats.recentMatches openDetail
 
@@ -134,10 +135,10 @@ matchDetailDialog mdl user match =
             Mdl
             mdlIds.closeModal
             (MLoaded Close)
-            [ ( "Rival", rival.name )
-            , ( "Score", (score user match) )
-            , ( "Your team", own.team.name )
-            , ( "Rival's team", rival.team.name )
+            [ ( t LangRival, rival.name )
+            , ( t LangScore, score user match )
+            , ( t RankingYourTeam, own.team.name )
+            , ( t RankingRivalsTeam, rival.team.name )
             ]
 
 

@@ -13,6 +13,7 @@ import Charty.LineChart
 import Html exposing (Html, div, span, text, p)
 import Html.Attributes exposing (id, class)
 import Html.Events as Events
+import I18n exposing (..)
 import Material
 import Material.Button as Button
 import Material.Icon as Icon
@@ -108,8 +109,7 @@ view model =
 
         Listing stats ->
             if List.isEmpty stats.recentMatches then
-                -- TODO
-                Shared.noData "You haven't played any matches yet"
+                Shared.noData (t StatsNoMatches)
             else
                 versusView model.mdl model.user stats.versus
 
@@ -147,11 +147,11 @@ detailView mdl stat detail =
                 detail.balanceHistory
 
         fields =
-            [ ( "Balance", displayBalance stat )
-            , ( "Matches", toString (stat.won + stat.tied + stat.lost) )
-            , ( "Record", (toString stat.won) ++ " victories - " ++ (toString stat.tied) ++ " tied - " ++ (toString stat.lost) ++ " lost" )
-            , ( "Goals made", toString stat.goalsMade )
-            , ( "Goals received", toString stat.goalsReceived )
+            [ ( t VersusBalance, displayBalance stat )
+            , ( t VersusMatches, toString (stat.won + stat.tied + stat.lost) )
+            , ( t VersusRecord, t <| VersusRecordVal { won = stat.won, tied = stat.tied, lost = stat.lost } )
+            , ( t VersusGoalsMade, toString stat.goalsMade )
+            , ( t VersusGoalsReceived, toString stat.goalsReceived )
             ]
 
         renderField ( name, value ) =
@@ -174,7 +174,7 @@ detailView mdl stat detail =
                     [ mdlIds.closeModal ]
                     mdl
                     [ Options.onClick CloseDetail, Button.colored, Button.raised, Options.cs "main-action-btn" ]
-                    [ text "Close" ]
+                    [ text (t UIClose) ]
                 ]
             ]
 
