@@ -36,11 +36,11 @@ After that, run migrations and import FIFA17 teams with the following commands:
 $ bundle exec rake db:setup
 ```
 
-To download and import FIFA17 teams:
+The current list of FIFA 17 leagues and teams is stored in the `data/teams.json`
+file and can be imported with the following rake task:
 
 ```
-$ bin/scraper
-$ bin/import_teams
+$ bundle exec rake fifatum:import
 ```
 
 ### Testing
