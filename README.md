@@ -47,3 +47,20 @@ To run de test suite simply run
 ```
 $ bundle exec rspec
 ```
+
+### Releasing
+
+First, build the docker image and tag both the image and the current Github revision. Make sure every local file that you don't want to be included in the resulting image is added to the `.dockerignore` file.
+
+```
+$ docker build -t jedi/fifatum .
+$ docker tag jedi/fifatum jedi/fifatum:x.y.z
+$ git tag -a x.y.z
+```
+
+Now push both tags:
+
+```
+$ docker push jedi/fifatum
+$ git push --tags
+```
