@@ -18,3 +18,5 @@
 
 /elm-stuff
 /data
+
+.dir-locals.el
