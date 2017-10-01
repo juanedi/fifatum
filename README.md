@@ -40,7 +40,7 @@ The current list of FIFA 17 leagues and teams is stored in the `data/teams.json`
 file and can be imported with the following rake task:
 
 ```
-$ bundle exec rake fifatum:import
+$ bundle exec rake fifatum:fifa17:import
 ```
 
 ### Testing
