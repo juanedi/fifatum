@@ -1,4 +1,4 @@
-module I18n exposing (t, KeyText(..))
+module I18n exposing (KeyText(..), t)
 
 
 type alias Language =

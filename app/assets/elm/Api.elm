@@ -1,28 +1,28 @@
 module Api
     exposing
-        ( User
-        , UsersResponse
-        , fetchUsers
+        ( League
         , Match
         , Participation
         , Ranking
-        , fetchRanking
-        , Stats
         , RivalStat
-        , fetchStats
-        , League
-        , fetchLeagues
+        , Stats
         , Team
-        , fetchRecentTeams
-        , fetchTeams
-        , reportMatch
+        , User
+        , UsersResponse
         , VersusDetail
+        , fetchLeagues
+        , fetchRanking
+        , fetchRecentTeams
+        , fetchStats
+        , fetchTeams
+        , fetchUsers
         , fetchVersusDetail
+        , reportMatch
         )
 
 import Date exposing (Date)
 import Http
-import Json.Decode as Decode exposing (field, list, dict, int, float, string, nullable)
+import Json.Decode as Decode exposing (dict, field, float, int, list, nullable, string)
 import Json.Encode as Encode
 import Task
 import Util exposing (unpackResult)
@@ -122,8 +122,8 @@ fetchUsers errorTagger okTagger =
                 (field "users" <| list userDecoder)
                 (field "last_rival_id" <| nullable int)
     in
-        Http.get "/api/users" decoder
-            |> send errorTagger okTagger
+    Http.get "/api/users" decoder
+        |> send errorTagger okTagger
 
 
 fetchRanking : (Http.Error -> msg) -> (Ranking -> msg) -> Cmd msg
@@ -148,30 +148,30 @@ fetchRecentTeams : (Http.Error -> msg) -> (List Team -> msg) -> User -> Cmd msg
 fetchRecentTeams errorTagger okTagger user =
     let
         url =
-            ("/api/users/" ++ (toString user.id) ++ "/recent_teams")
+            "/api/users/" ++ toString user.id ++ "/recent_teams"
     in
-        Http.get url (list teamDecoder)
-            |> send errorTagger okTagger
+    Http.get url (list teamDecoder)
+        |> send errorTagger okTagger
 
 
 fetchTeams : (Http.Error -> msg) -> (List Team -> msg) -> League -> Cmd msg
 fetchTeams errorTagger okTagger league =
     let
         url =
-            ("/api/leagues/" ++ (toString league.id) ++ "/teams")
+            "/api/leagues/" ++ toString league.id ++ "/teams"
     in
-        Http.get url (list teamDecoder)
-            |> send errorTagger okTagger
+    Http.get url (list teamDecoder)
+        |> send errorTagger okTagger
 
 
 fetchVersusDetail : Int -> (Http.Error -> msg) -> (VersusDetail -> msg) -> Cmd msg
 fetchVersusDetail rivalId errorTagger okTagger =
     let
         url =
-            "/api/versus/" ++ (toString rivalId)
+            "/api/versus/" ++ toString rivalId
     in
-        Http.get url versusDetailDecoder
-            |> send errorTagger okTagger
+    Http.get url versusDetailDecoder
+        |> send errorTagger okTagger
 
 
 reportMatch : (Http.Error -> msg) -> msg -> MatchReport -> Cmd msg
@@ -188,8 +188,8 @@ reportMatch errorTagger okMsg matchReport =
                 , withCredentials = False
                 }
     in
-        request
-            |> send errorTagger (always okMsg)
+    request
+        |> send errorTagger (always okMsg)
 
 
 send : (Http.Error -> msg) -> (a -> msg) -> Http.Request a -> Cmd msg
@@ -279,5 +279,5 @@ versusDetailDecoder =
                 (field "date" int)
                 (field "balance" int)
     in
-        Decode.map VersusDetail
-            (field "balanceHistory" (list balanceEntryDecoder))
+    Decode.map VersusDetail
+        (field "balanceHistory" (list balanceEntryDecoder))

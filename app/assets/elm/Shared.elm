@@ -1,16 +1,16 @@
 module Shared
     exposing
-        ( loading
-        , titleHeader
-        , onSelect
-        , noData
-        , clickableCell
+        ( clickableCell
+        , loading
         , modalDialog
         , newMatchButton
+        , noData
+        , onSelect
+        , titleHeader
         )
 
-import Html exposing (Html, div, span, text, p)
-import Html.Attributes exposing (id, class)
+import Html exposing (Html, div, p, span, text)
+import Html.Attributes exposing (class, id)
 import Html.Events as Events
 import I18n exposing (..)
 import Json.Decode
@@ -60,10 +60,10 @@ onSelect msg =
         decoder =
             Json.Decode.at [ "target", "value" ] Json.Decode.string
                 |> Json.Decode.map String.toInt
-                |> Json.Decode.map (Result.withDefault (-1))
+                |> Json.Decode.map (Result.withDefault -1)
                 |> Json.Decode.map msg
     in
-        Events.on "change" decoder
+    Events.on "change" decoder
 
 
 noData : String -> Html msg
@@ -96,14 +96,14 @@ modalDialog mdl mdlTagger closeButtonId closeMsg fields =
                 , span [ class "value" ] [ text value ]
                 ]
     in
-        div [ class "modal-dialog-container" ]
-            [ div [ class "modal-dialog" ]
-                [ div [ class "content" ] <|
-                    List.map (uncurry field) fields
-                , div [ class "actions" ]
-                    [ modalCloseButton ]
-                ]
+    div [ class "modal-dialog-container" ]
+        [ div [ class "modal-dialog" ]
+            [ div [ class "content" ] <|
+                List.map (uncurry field) fields
+            , div [ class "actions" ]
+                [ modalCloseButton ]
             ]
+        ]
 
 
 newMatchButton : Int -> Material.Model -> (Material.Msg msg -> msg) -> msg -> Html msg

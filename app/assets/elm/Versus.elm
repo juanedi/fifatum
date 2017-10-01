@@ -10,8 +10,8 @@ module Versus
 
 import Api exposing (User)
 import Charty.LineChart
-import Html exposing (Html, div, span, text, p)
-import Html.Attributes exposing (id, class)
+import Html exposing (Html, div, p, span, text)
+import Html.Attributes exposing (class, id)
 import Html.Events as Events
 import I18n exposing (..)
 import Material
@@ -124,7 +124,7 @@ versusView : Material.Model -> User -> List Api.RivalStat -> Html Msg
 versusView mdl user stats =
     div []
         [ div [ id "stats" ] <|
-            [ statsListing (List.sortBy (\stat -> (-1) * balance stat) stats) ]
+            [ statsListing (List.sortBy (\stat -> -1 * balance stat) stats) ]
         , newMatchButton mdl
         ]
 
@@ -161,22 +161,22 @@ detailView mdl stat detail =
                 , span [ class "value" ] [ text value ]
                 ]
     in
-        div [ class "rival-stat-detail" ]
-            [ Html.h1 [] [ text stat.rivalName ]
-            , Html.div
-                [ class "rival-stat-chart" ]
-                [ Charty.LineChart.view chartConfig [ { label = "Balance", data = chartData } ] ]
-            , Html.ul
-                [ class "rival-stat-fields" ]
-                (List.map renderField fields)
-            , div [ class "actions" ]
-                [ Button.render Mdl
-                    [ mdlIds.closeModal ]
-                    mdl
-                    [ Options.onClick CloseDetail, Button.colored, Button.raised, Options.cs "main-action-btn" ]
-                    [ text (t UIClose) ]
-                ]
+    div [ class "rival-stat-detail" ]
+        [ Html.h1 [] [ text stat.rivalName ]
+        , Html.div
+            [ class "rival-stat-chart" ]
+            [ Charty.LineChart.view chartConfig [ { label = "Balance", data = chartData } ] ]
+        , Html.ul
+            [ class "rival-stat-fields" ]
+            (List.map renderField fields)
+        , div [ class "actions" ]
+            [ Button.render Mdl
+                [ mdlIds.closeModal ]
+                mdl
+                [ Options.onClick CloseDetail, Button.colored, Button.raised, Options.cs "main-action-btn" ]
+                [ text (t UIClose) ]
             ]
+        ]
 
 
 statsListing : List Api.RivalStat -> Html Msg
@@ -190,8 +190,8 @@ statsListing stats =
                 , span [ class "icon" ] [ Icon.i (balanceIcon stat) ]
                 ]
     in
-        Html.ul [ class "listing" ] <|
-            List.map statRow stats
+    Html.ul [ class "listing" ] <|
+        List.map statRow stats
 
 
 balance : Api.RivalStat -> Int

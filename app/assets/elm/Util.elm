@@ -58,7 +58,7 @@ monthNumber month =
 
 unreachable : a -> b
 unreachable =
-    (\_ -> Debug.crash "This failure cannot happen.")
+    \_ -> Debug.crash "This failure cannot happen."
 
 
 performMessage : msg -> Cmd msg

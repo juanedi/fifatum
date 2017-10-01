@@ -30,12 +30,12 @@ locationParser location =
                 , map NewMatchRoute (s "match")
                 ]
     in
-        if location.hash == "" then
-            VersusRoute
-        else
-            location
-                |> parseHash matchers
-                |> Maybe.withDefault NotFoundRoute
+    if location.hash == "" then
+        VersusRoute
+    else
+        location
+            |> parseHash matchers
+            |> Maybe.withDefault NotFoundRoute
 
 
 navigateToRoot : Cmd msg

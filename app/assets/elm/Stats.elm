@@ -8,8 +8,8 @@ module Stats
         )
 
 import Api exposing (User)
-import Html exposing (Html, div, span, text, p)
-import Html.Attributes exposing (id, class, style)
+import Html exposing (Html, div, p, span, text)
+import Html.Attributes exposing (class, id, style)
 import Html.Events as Events
 import I18n exposing (..)
 import Material
@@ -118,8 +118,8 @@ matchesListing user matches =
                 , span [ class "icon", style [ ( "min-width", "47px" ) ] ] [ text (score user match) ]
                 ]
     in
-        Html.ul [ class "listing" ] <|
-            List.map matchRow matches
+    Html.ul [ class "listing" ] <|
+        List.map matchRow matches
 
 
 matchDetailDialog : Material.Model -> User -> Api.Match -> Html Msg
@@ -131,15 +131,15 @@ matchDetailDialog mdl user match =
         rival =
             rivalParticipation user match
     in
-        Shared.modalDialog mdl
-            Mdl
-            mdlIds.closeModal
-            (MLoaded Close)
-            [ ( t LangRival, rival.name )
-            , ( t LangScore, score user match )
-            , ( t RankingYourTeam, own.team.name )
-            , ( t RankingRivalsTeam, rival.team.name )
-            ]
+    Shared.modalDialog mdl
+        Mdl
+        mdlIds.closeModal
+        (MLoaded Close)
+        [ ( t LangRival, rival.name )
+        , ( t LangScore, score user match )
+        , ( t RankingYourTeam, own.team.name )
+        , ( t RankingRivalsTeam, rival.team.name )
+        ]
 
 
 rivalName : User -> Api.Match -> String

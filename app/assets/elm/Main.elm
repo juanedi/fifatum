@@ -10,7 +10,7 @@ import Navigation exposing (Location)
 import NewMatch
 import Ranking
 import Return
-import Routing exposing (locationParser, Route(..))
+import Routing exposing (Route(..), locationParser)
 import Shared
 import Stats
 import Versus
@@ -99,8 +99,8 @@ initPage flags route =
                     NewMatch.init flags.user
                         |> Return.mapBoth NewMatchMsg (NewMatchModel >> initModel)
     in
-        pageInit
-            |> Return.command (Material.init Mdl)
+    pageInit
+        |> Return.command (Material.init Mdl)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -120,42 +120,42 @@ update msg model =
         _ ->
             let
                 setPageModel tagger pModel =
-                    { model | pageModel = (tagger pModel) }
+                    { model | pageModel = tagger pModel }
             in
-                case ( model.pageModel, msg ) of
-                    ( RankingModel pModel, RankingMsg pMsg ) ->
-                        Ranking.update pMsg pModel
-                            |> Return.map (setPageModel RankingModel)
-                            |> Return.mapCmd RankingMsg
+            case ( model.pageModel, msg ) of
+                ( RankingModel pModel, RankingMsg pMsg ) ->
+                    Ranking.update pMsg pModel
+                        |> Return.map (setPageModel RankingModel)
+                        |> Return.mapCmd RankingMsg
 
-                    ( VersusModel pModel, VersusMsg pMsg ) ->
-                        case pMsg of
-                            Versus.Event Versus.NewMatch ->
-                                ( model, Routing.navigate NewMatchRoute )
+                ( VersusModel pModel, VersusMsg pMsg ) ->
+                    case pMsg of
+                        Versus.Event Versus.NewMatch ->
+                            ( model, Routing.navigate NewMatchRoute )
 
-                            _ ->
-                                Versus.update pMsg pModel
-                                    |> Return.map (setPageModel VersusModel)
-                                    |> Return.mapCmd VersusMsg
+                        _ ->
+                            Versus.update pMsg pModel
+                                |> Return.map (setPageModel VersusModel)
+                                |> Return.mapCmd VersusMsg
 
-                    ( StatsModel pModel, StatsMsg pMsg ) ->
-                        Stats.update pMsg pModel
-                            |> Return.map (setPageModel StatsModel)
-                            |> Return.mapCmd StatsMsg
+                ( StatsModel pModel, StatsMsg pMsg ) ->
+                    Stats.update pMsg pModel
+                        |> Return.map (setPageModel StatsModel)
+                        |> Return.mapCmd StatsMsg
 
-                    ( NewMatchModel pModel, NewMatchMsg pMsg ) ->
-                        case pMsg of
-                            NewMatch.Event NewMatch.MatchReportOk ->
-                                Return.singleton model
-                                    |> Return.command (Routing.navigateToRoot)
+                ( NewMatchModel pModel, NewMatchMsg pMsg ) ->
+                    case pMsg of
+                        NewMatch.Event NewMatch.MatchReportOk ->
+                            Return.singleton model
+                                |> Return.command Routing.navigateToRoot
 
-                            _ ->
-                                NewMatch.update pMsg pModel
-                                    |> Return.map (setPageModel NewMatchModel)
-                                    |> Return.mapCmd NewMatchMsg
+                        _ ->
+                            NewMatch.update pMsg pModel
+                                |> Return.map (setPageModel NewMatchModel)
+                                |> Return.mapCmd NewMatchMsg
 
-                    _ ->
-                        Return.singleton model
+                _ ->
+                    Return.singleton model
 
 
 setRoute : Route -> Model -> Model
@@ -188,15 +188,15 @@ drawer model =
                 ]
                 [ text label ]
     in
-        [ Layout.title [] [ text model.user.name ]
-        , Layout.navigation []
-            [ menuLink (t MenuRivals) VersusRoute
-            , menuLink (t MenuMatches) StatsRoute
-            , menuLink (t MenuRanking) RankingRoute
-            , Html.hr [] []
-            , Layout.link [ Layout.href "/logout" ] [ text (t MenuLogout) ]
-            ]
+    [ Layout.title [] [ text model.user.name ]
+    , Layout.navigation []
+        [ menuLink (t MenuRivals) VersusRoute
+        , menuLink (t MenuMatches) StatsRoute
+        , menuLink (t MenuRanking) RankingRoute
+        , Html.hr [] []
+        , Layout.link [ Layout.href "/logout" ] [ text (t MenuLogout) ]
         ]
+    ]
 
 
 header : Model -> List (Html Msg)

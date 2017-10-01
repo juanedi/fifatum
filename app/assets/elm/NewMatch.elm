@@ -8,16 +8,15 @@ module NewMatch
         , view
         )
 
-import Api exposing (User, League, Team)
-import Html
-import Html exposing (Html, div, text, label, select)
-import Html.Attributes exposing (for, id, style, value, selected, disabled, class)
+import Api exposing (League, Team, User)
+import Html exposing (Html, div, label, select, text)
+import Html.Attributes exposing (class, disabled, for, id, selected, style, value)
 import I18n exposing (..)
 import Material
 import Material.Button as Button
-import Material.Grid exposing (grid, cell, size, Device(..))
+import Material.Grid exposing (Device(..), cell, grid, size)
 import Material.Options as Options
-import Return exposing (return, singleton, command)
+import Return exposing (command, return, singleton)
 import Shared
 import Util
 
@@ -177,7 +176,7 @@ update msg model =
                                         Rival ->
                                             { state | rivalScore = state.rivalScore + 1 }
                             in
-                                singleton { model | state = Scoring updatedState }
+                            singleton { model | state = Scoring updatedState }
 
                         Reset ->
                             singleton { model | state = Scoring { state | ownScore = 0, rivalScore = 0 } }
@@ -189,8 +188,8 @@ update msg model =
                                     , { user = state.rival, team = state.rivalTeam, goals = state.rivalScore }
                                     )
                             in
-                                singleton { model | state = Submitted }
-                                    |> command (Api.reportMatch (always (MSubmitted ReportFailed)) (MSubmitted ReportOk) report)
+                            singleton { model | state = Submitted }
+                                |> command (Api.reportMatch (always (MSubmitted ReportFailed)) (MSubmitted ReportOk) report)
 
                 ( Submitted, MSubmitted msg ) ->
                     case msg of
@@ -220,10 +219,10 @@ updateLoading model state msg =
                             |> List.filter (\u -> u.id /= model.user.id)
                             |> List.sortBy (rivalSortCriteria lastRivalId)
                 in
-                    if List.isEmpty otherUsers then
-                        { model | state = NoData (t NewMatchNoRivals) }
-                    else
-                        { model | state = Loading { state | otherUsers = Just otherUsers } }
+                if List.isEmpty otherUsers then
+                    { model | state = NoData (t NewMatchNoRivals) }
+                else
+                    { model | state = Loading { state | otherUsers = Just otherUsers } }
 
             FetchedLeagues leagues ->
                 if List.isEmpty leagues then
@@ -247,7 +246,7 @@ rivalSortCriteria lastRivalId =
                 |> Maybe.withDefault False
                 |> boolToInt
     in
-        \u -> ( isLastRival u, u.name )
+    \u -> ( isLastRival u, u.name )
 
 
 updateTeamSelection : Model -> TeamSelectionState -> TeamSelectMsg -> ( Model, Cmd Msg )
@@ -256,50 +255,50 @@ updateTeamSelection model state msg =
         setState s =
             singleton { model | state = TeamSelection s }
     in
-        case msg of
-            FetchedRivalRecentTeams teams ->
-                setState
-                    { state
-                        | rivalTeam = List.head teams
-                        , rivalRecentTeams = Just teams
-                    }
+    case msg of
+        FetchedRivalRecentTeams teams ->
+            setState
+                { state
+                    | rivalTeam = List.head teams
+                    , rivalRecentTeams = Just teams
+                }
 
-            RivalChanged userId ->
-                let
-                    rival =
-                        state.otherUsers
-                            |> List.filter (\u -> u.id == userId)
-                            |> List.head
-                in
-                    case rival of
-                        Nothing ->
-                            Debug.crash "Selected an invalid option"
+        RivalChanged userId ->
+            let
+                rival =
+                    state.otherUsers
+                        |> List.filter (\u -> u.id == userId)
+                        |> List.head
+            in
+            case rival of
+                Nothing ->
+                    Debug.crash "Selected an invalid option"
 
-                        Just rival ->
-                            setState { state | rival = rival, rivalRecentTeams = Nothing }
-                                |> command (Api.fetchRecentTeams (always FetchFailed) (MTeamSelection << FetchedRivalRecentTeams) rival)
+                Just rival ->
+                    setState { state | rival = rival, rivalRecentTeams = Nothing }
+                        |> command (Api.fetchRecentTeams (always FetchFailed) (MTeamSelection << FetchedRivalRecentTeams) rival)
 
-            TeamChange Own team ->
-                setState { state | ownTeam = Just team }
+        TeamChange Own team ->
+            setState { state | ownTeam = Just team }
 
-            TeamChange Rival team ->
-                setState { state | rivalTeam = Just team }
+        TeamChange Rival team ->
+            setState { state | rivalTeam = Just team }
 
-            ExpandSelection target ->
-                initExpandedSelection model state target
+        ExpandSelection target ->
+            initExpandedSelection model state target
 
-            TeamSelectionDone ownTeam rivalTeam ->
-                singleton
-                    { model
-                        | state =
-                            Scoring
-                                { rival = state.rival
-                                , ownTeam = ownTeam
-                                , rivalTeam = rivalTeam
-                                , ownScore = 0
-                                , rivalScore = 0
-                                }
-                    }
+        TeamSelectionDone ownTeam rivalTeam ->
+            singleton
+                { model
+                    | state =
+                        Scoring
+                            { rival = state.rival
+                            , ownTeam = ownTeam
+                            , rivalTeam = rivalTeam
+                            , ownScore = 0
+                            , rivalScore = 0
+                            }
+                }
 
 
 updateExpandedSelection : Model -> ExpandedSelectionState -> ExpandedSelectionMsg -> ( Model, Cmd Msg )
@@ -308,58 +307,58 @@ updateExpandedSelection model state msg =
         setState s =
             singleton { model | state = ExpandedSelection s }
     in
-        case msg of
-            LeagueChange league ->
-                setState { state | league = league, teams = Nothing, selection = Nothing }
-                    |> command (Api.fetchTeams (always FetchFailed) (MExpandedSelection << FetchedTeams) league)
+    case msg of
+        LeagueChange league ->
+            setState { state | league = league, teams = Nothing, selection = Nothing }
+                |> command (Api.fetchTeams (always FetchFailed) (MExpandedSelection << FetchedTeams) league)
 
-            TeamChangedExpanded team ->
-                setState { state | selection = Just team }
+        TeamChangedExpanded team ->
+            setState { state | selection = Just team }
 
-            FetchedTeams teams ->
-                let
-                    sorted =
-                        List.sortBy .name teams
-                in
-                    setState { state | teams = Just sorted, selection = List.head sorted }
+        FetchedTeams teams ->
+            let
+                sorted =
+                    List.sortBy .name teams
+            in
+            setState { state | teams = Just sorted, selection = List.head sorted }
 
-            Done ->
-                let
-                    context =
-                        state.context
+        Done ->
+            let
+                context =
+                    state.context
 
-                    setState s =
-                        singleton { model | state = TeamSelection s }
+                setState s =
+                    singleton { model | state = TeamSelection s }
 
-                    addTeam team maybeList =
-                        Maybe.withDefault [] maybeList
-                            |> (\l ->
-                                    if (List.member team l) then
-                                        l
-                                    else
-                                        team :: l
-                               )
-                            |> List.sortBy .name
-                in
-                    case state.selection of
-                        Nothing ->
-                            Debug.crash "invalid state"
+                addTeam team maybeList =
+                    Maybe.withDefault [] maybeList
+                        |> (\l ->
+                                if List.member team l then
+                                    l
+                                else
+                                    team :: l
+                           )
+                        |> List.sortBy .name
+            in
+            case state.selection of
+                Nothing ->
+                    Debug.crash "invalid state"
 
-                        Just team ->
-                            case state.target of
-                                Own ->
-                                    setState
-                                        { context
-                                            | ownRecentTeams = addTeam team (Just state.context.ownRecentTeams)
-                                            , ownTeam = state.selection
-                                        }
+                Just team ->
+                    case state.target of
+                        Own ->
+                            setState
+                                { context
+                                    | ownRecentTeams = addTeam team (Just state.context.ownRecentTeams)
+                                    , ownTeam = state.selection
+                                }
 
-                                Rival ->
-                                    setState
-                                        { context
-                                            | rivalRecentTeams = Just (addTeam team (state.context.rivalRecentTeams))
-                                            , rivalTeam = state.selection
-                                        }
+                        Rival ->
+                            setState
+                                { context
+                                    | rivalRecentTeams = Just (addTeam team state.context.rivalRecentTeams)
+                                    , rivalTeam = state.selection
+                                }
 
 
 initExpandedSelection : Model -> TeamSelectionState -> TeamTarget -> ( Model, Cmd Msg )
@@ -457,77 +456,77 @@ teamSelectionView model state =
                         ]
                         [ text (t UISelect) ]
             in
-                case recentTeams of
-                    Nothing ->
-                        selectTeamButton True
+            case recentTeams of
+                Nothing ->
+                    selectTeamButton True
 
-                    Just [] ->
-                        selectTeamButton False
+                Just [] ->
+                    selectTeamButton False
 
-                    Just teams ->
-                        let
-                            isSelected id =
-                                currentSelection
-                                    |> Maybe.map (\team -> team.id == id)
-                                    |> Maybe.withDefault False
+                Just teams ->
+                    let
+                        isSelected id =
+                            currentSelection
+                                |> Maybe.map (\team -> team.id == id)
+                                |> Maybe.withDefault False
 
-                            teamComboOption team =
-                                Html.option
-                                    [ value (toString team.id), selected (isSelected team.id) ]
-                                    [ text team.name ]
+                        teamComboOption team =
+                            Html.option
+                                [ value (toString team.id), selected (isSelected team.id) ]
+                                [ text team.name ]
 
-                            otherComboOption =
-                                Html.option
-                                    [ value "0", selected False ]
-                                    [ text (t UIOther) ]
+                        otherComboOption =
+                            Html.option
+                                [ value "0", selected False ]
+                                [ text (t UIOther) ]
 
-                            onSelect id =
-                                List.filter (\t -> t.id == id) teams
-                                    |> List.head
-                                    |> Maybe.map (MTeamSelection << TeamChange target)
-                                    |> Maybe.withDefault (MTeamSelection (ExpandSelection target))
-                        in
-                            select [ id comboId, Shared.onSelect onSelect ] <|
-                                (List.map teamComboOption teams)
-                                    ++ [ otherComboOption ]
+                        onSelect id =
+                            List.filter (\t -> t.id == id) teams
+                                |> List.head
+                                |> Maybe.map (MTeamSelection << TeamChange target)
+                                |> Maybe.withDefault (MTeamSelection (ExpandSelection target))
+                    in
+                    select [ id comboId, Shared.onSelect onSelect ] <|
+                        List.map teamComboOption teams
+                            ++ [ otherComboOption ]
     in
-        [ div [ style [ ( "flex-grow", "1" ) ] ]
-            [ label [ for "select-team1" ] [ text (t NewMatchYourTeam) ]
-            , teamSelect Own state.ownTeam mdlIds.teamSelection1 "select-team1" (Just state.ownRecentTeams)
-            ]
-        , div [ style [ ( "flex-grow", "1" ) ] ]
-            [ label [ for "select-rival" ] [ text (t NewMatchRivalTeam) ]
-            , Html.select [ id "select-rival", Shared.onSelect (MTeamSelection << RivalChanged) ] <|
-                List.map
-                    (\user ->
-                        Html.option
-                            [ value (toString user.id), selected (state.rival.id == user.id) ]
-                            [ text user.name ]
-                    )
-                    state.otherUsers
-            , teamSelect Rival state.rivalTeam mdlIds.teamSelection2 "select-team2" state.rivalRecentTeams
-            ]
-        , div
-            [ class "actions" ]
-            [ let
-                attributes =
-                    case ( state.ownTeam, state.rivalTeam ) of
-                        ( Just ot, Just rt ) ->
-                            [ Options.onClick (MTeamSelection (TeamSelectionDone ot rt)) ]
-
-                        _ ->
-                            [ Button.disabled ]
-              in
-                mainActionButton model.mdl mdlIds.teamSelectionDone (t UINext) attributes
-            ]
+    [ div [ style [ ( "flex-grow", "1" ) ] ]
+        [ label [ for "select-team1" ] [ text (t NewMatchYourTeam) ]
+        , teamSelect Own state.ownTeam mdlIds.teamSelection1 "select-team1" (Just state.ownRecentTeams)
         ]
+    , div [ style [ ( "flex-grow", "1" ) ] ]
+        [ label [ for "select-rival" ] [ text (t NewMatchRivalTeam) ]
+        , Html.select [ id "select-rival", Shared.onSelect (MTeamSelection << RivalChanged) ] <|
+            List.map
+                (\user ->
+                    Html.option
+                        [ value (toString user.id), selected (state.rival.id == user.id) ]
+                        [ text user.name ]
+                )
+                state.otherUsers
+        , teamSelect Rival state.rivalTeam mdlIds.teamSelection2 "select-team2" state.rivalRecentTeams
+        ]
+    , div
+        [ class "actions" ]
+        [ let
+            attributes =
+                case ( state.ownTeam, state.rivalTeam ) of
+                    ( Just ot, Just rt ) ->
+                        [ Options.onClick (MTeamSelection (TeamSelectionDone ot rt)) ]
+
+                    _ ->
+                        [ Button.disabled ]
+          in
+          mainActionButton model.mdl mdlIds.teamSelectionDone (t UINext) attributes
+        ]
+    ]
 
 
 expandedSelectionView : Model -> ExpandedSelectionState -> List (Html Msg)
 expandedSelectionView model state =
     let
         onLeagueSelect id =
-            case (List.filter (\l -> l.id == id) state.context.leagues |> List.head) of
+            case List.filter (\l -> l.id == id) state.context.leagues |> List.head of
                 Just l ->
                     MExpandedSelection <| LeagueChange l
 
@@ -552,12 +551,12 @@ expandedSelectionView model state =
                         |> List.filter (\t -> t.id == id)
                         |> List.head
             in
-                case selection of
-                    Just l ->
-                        MExpandedSelection <| TeamChangedExpanded l
+            case selection of
+                Just l ->
+                    MExpandedSelection <| TeamChangedExpanded l
 
-                    Nothing ->
-                        Debug.crash "invalid option"
+                Nothing ->
+                    Debug.crash "invalid option"
 
         teamSelect =
             Html.select
@@ -580,18 +579,18 @@ expandedSelectionView model state =
                     )
                     (Maybe.withDefault [] state.teams)
     in
-        [ div [ style [ ( "flex-grow", "1" ) ] ]
-            [ label [ for "select-league" ] [ text (t LangLeague) ]
-            , leagueSelect
-            ]
-        , div [ style [ ( "flex-grow", "1" ) ] ]
-            [ label [ for "team" ] [ text (t LangTeam) ]
-            , teamSelect
-            ]
-        , div
-            [ class "actions" ]
-            [ mainActionButton model.mdl mdlIds.expandedSelectionDone (t UIDone) [ Options.onClick (MExpandedSelection Done) ] ]
+    [ div [ style [ ( "flex-grow", "1" ) ] ]
+        [ label [ for "select-league" ] [ text (t LangLeague) ]
+        , leagueSelect
         ]
+    , div [ style [ ( "flex-grow", "1" ) ] ]
+        [ label [ for "team" ] [ text (t LangTeam) ]
+        , teamSelect
+        ]
+    , div
+        [ class "actions" ]
+        [ mainActionButton model.mdl mdlIds.expandedSelectionDone (t UIDone) [ Options.onClick (MExpandedSelection Done) ] ]
+    ]
 
 
 scoringView : Model -> ScoringState -> List (Html Msg)
@@ -624,16 +623,16 @@ scoringView model state =
                         ]
                         [ text (t LangGoal) ]
             in
-                grid []
-                    [ halfWidthColumn
-                        [ Html.p [ class "name" ] [ text name ]
-                        , Html.p [ class "team" ] [ text teamName ]
-                        ]
-                    , halfWidthColumn
-                        [ Html.p [ class "score" ] [ text (toString score) ]
-                        , goalButton
-                        ]
+            grid []
+                [ halfWidthColumn
+                    [ Html.p [ class "name" ] [ text name ]
+                    , Html.p [ class "team" ] [ text teamName ]
                     ]
+                , halfWidthColumn
+                    [ Html.p [ class "score" ] [ text (toString score) ]
+                    , goalButton
+                    ]
+                ]
 
         resetButton =
             Button.render Mdl
@@ -657,16 +656,16 @@ scoringView model state =
                 ]
                 [ text (t NewMatchReport) ]
     in
-        [ div [ style [ ( "flex-grow", "1" ) ] ]
-            [ teamDisplay Own ]
-        , div [ style [ ( "flex-grow", "1" ) ] ]
-            [ teamDisplay Rival ]
-        , div
-            [ class "actions" ]
-            [ resetButton
-            , reportButton
-            ]
+    [ div [ style [ ( "flex-grow", "1" ) ] ]
+        [ teamDisplay Own ]
+    , div [ style [ ( "flex-grow", "1" ) ] ]
+        [ teamDisplay Rival ]
+    , div
+        [ class "actions" ]
+        [ resetButton
+        , reportButton
         ]
+    ]
 
 
 mainActionButton mdl mdlId label attrs =

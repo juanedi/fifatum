@@ -62,9 +62,9 @@ view model =
         center =
             Options.css "text-align" "center"
     in
-        case model.state of
-            Loading ->
-                Shared.loading
+    case model.state of
+        Loading ->
+            Shared.loading
 
-            Loaded ranking ->
-                Shared.noData (t RankingNothingHere)
+        Loaded ranking ->
+            Shared.noData (t RankingNothingHere)
